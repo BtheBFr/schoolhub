@@ -51,8 +51,40 @@ function showPhotos(person) {
         const caption = document.createElement('p');
         caption.textContent = `Фото ${index + 1}`;
         
+        // Кнопка скачивания
+        const downloadBtn = document.createElement('button');
+        downloadBtn.className = 'download-btn';
+        downloadBtn.innerHTML = '⬇ Скачать фото';
+        downloadBtn.onclick = async () => {
+            try {
+                const response = await fetch(photoPath);
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = photo; // Имя файла при скачивании
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+                // Визуальный эффект при скачивании
+                downloadBtn.innerHTML = '✅ Скачано!';
+                setTimeout(() => {
+                    downloadBtn.innerHTML = '⬇ Скачать фото';
+                }, 2000);
+            } catch (error) {
+                console.error('Ошибка скачивания:', error);
+                downloadBtn.innerHTML = '❌ Ошибка';
+                setTimeout(() => {
+                    downloadBtn.innerHTML = '⬇ Скачать фото';
+                }, 2000);
+            }
+        };
+        
         frame.appendChild(img);
         frame.appendChild(caption);
+        frame.appendChild(downloadBtn);
         photosGrid.appendChild(frame);
     });
     
