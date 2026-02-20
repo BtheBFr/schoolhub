@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SchoolHub - Галерея людей</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">Наши люди</h1>
+        <p class="subtitle">Выберите человека, чтобы увидеть его фото</p>
+        
+        <div class="buttons-container" id="buttonsContainer">
+            <!-- Кнопки будут создаваться автоматически -->
+        </div>
+
+        <div class="gallery" id="gallery">
+            <div class="gallery-header">
+                <h2 id="selectedPersonName"></h2>
+                <button class="close-btn" onclick="closeGallery()">×</button>
+            </div>
+            <div class="photos-grid" id="photosGrid">
+                <!-- Фото будут загружаться сюда -->
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Сайт создан командой:</p>
+        <p class="authors">b the b · ElPrimo · MCparkur · 2026</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
