@@ -151,10 +151,11 @@ body {
     border-color: rgba(255, 255, 255, 0.1);
 }
 
+/* ФИКСИРОВАННЫЙ РАЗМЕР ДЛЯ ВСЕХ ФОТО */
 .photo-frame img {
     width: 100%;
-    height: 250px;
-    object-fit: cover;
+    height: 200px; /* Одинаковая высота для всех фото */
+    object-fit: cover; /* Обрезает фото, чтобы заполнить рамку */
     border-radius: 15px;
     border: 2px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
@@ -219,10 +220,11 @@ body {
     animation: zoomIn 0.3s ease;
 }
 
+/* В модальном окне фото показывается полностью, без обрезки */
 .modal-content img {
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: contain; /* Показывает фото целиком, без обрезки */
     border-radius: 10px;
     box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
 }
@@ -340,8 +342,9 @@ footer p {
         padding: 12px;
     }
     
+    /* На телефонах тоже фиксированный размер */
     .photo-frame img {
-        height: 200px;
+        height: 180px; /* Чуть меньше на телефонах */
     }
     
     .download-btn {
@@ -376,7 +379,7 @@ footer p {
     }
     
     .photo-frame img {
-        height: 180px;
+        height: 150px; /* Ещё меньше на очень маленьких экранах */
     }
 }
 
