@@ -54,33 +54,36 @@ function showPhotos(person) {
         // Кнопка скачивания
         const downloadBtn = document.createElement('button');
         downloadBtn.className = 'download-btn';
-        downloadBtn.innerHTML = '⬇ Скачать фото';
-        downloadBtn.onclick = async () => {
+        downloadBtn.innerHTML = '⬇ Скачать';
+        downloadBtn.onclick = async (e) => {
+            e.stopPropagation(); // Не открывать модальное окно при клике на кнопку
             try {
                 const response = await fetch(photoPath);
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = photo; // Имя файла при скачивании
+                a.download = photo;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
                 window.URL.revokeObjectURL(url);
                 
-                // Визуальный эффект при скачивании
-                downloadBtn.innerHTML = '✅ Скачано!';
+                downloadBtn.innerHTML = '✅ Готово';
                 setTimeout(() => {
-                    downloadBtn.innerHTML = '⬇ Скачать фото';
+                    downloadBtn.innerHTML = '⬇ Скачать';
                 }, 2000);
             } catch (error) {
                 console.error('Ошибка скачивания:', error);
                 downloadBtn.innerHTML = '❌ Ошибка';
                 setTimeout(() => {
-                    downloadBtn.innerHTML = '⬇ Скачать фото';
+                    downloadBtn.innerHTML = '⬇ Скачать';
                 }, 2000);
             }
         };
+        
+        // Открытие фото в модальном окне при клике на frame
+        frame.onclick = () => openModal(photoPath, `${person.name} - фото ${index + 1}`);
         
         frame.appendChild(img);
         frame.appendChild(caption);
@@ -94,6 +97,58 @@ function showPhotos(person) {
 // Закрываем галерею
 function closeGallery() {
     document.getElementById('gallery').classList.remove('active');
+}
+
+// Модальное окно для просмотра фото
+function openModal(imageSrc, caption) {
+    // Создаем модальное окно, если его нет
+    let modal = document.getElementById('imageModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'imageModal';
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <span class="modal-close">&times;</span>
+                <img src="" alt="">
+                <div class="modal-caption"></div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        // Закрытие при клике на крестик
+        modal.querySelector('.modal-close').onclick = closeModal;
+        
+        // Закрытие при клике вне фото
+        modal.onclick = (e) => {
+            if (e.target === modal) closeModal();
+        };
+        
+        // Закрытие по клавише Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('active')) {
+                closeModal();
+            }
+        });
+    }
+    
+    const modalImg = modal.querySelector('img');
+    const modalCaption = modal.querySelector('.modal-caption');
+    
+    modalImg.src = imageSrc;
+    modalCaption.textContent = caption;
+    modal.classList.add('active');
+    
+    // Блокируем скролл страницы
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+    const modal = document.getElementById('imageModal');
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = ''; // Возвращаем скролл
+    }
 }
 
 // Запускаем создание кнопок при загрузке страницы
