@@ -1,0 +1,19 @@
+{
+  "people": [
+    {
+      "name": "Анна Сергеевна",
+      "photos": [
+        "anna1.png",
+        "anna2.png"
+      ]
+    },
+    {
+      "name": "Мария Ивановна",
+      "photos": [
+        "maria1.png",
+        "maria2.png",
+        "maria3.png"
+      ]
+    }
+  ]
+}
