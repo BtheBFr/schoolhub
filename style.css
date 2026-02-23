@@ -182,6 +182,7 @@ body {
     display: flex;
     flex-direction: column;
     cursor: pointer;
+    position: relative;
 }
 
 .photo-frame:hover {
@@ -209,26 +210,45 @@ body {
     margin-bottom: 10px;
 }
 
-.download-btn {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 10px 15px;
+.button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: auto;
+}
+
+.download-btn, .copy-link-btn {
+    flex: 1;
+    padding: 10px;
     border-radius: 20px;
-    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     font-weight: 300;
     cursor: pointer;
     transition: all 0.3s ease;
     font-size: 0.9em;
-    margin-top: auto;
-    text-transform: uppercase;
-    letter-spacing: 1px;
     backdrop-filter: blur(5px);
     pointer-events: auto;
+    text-align: center;
+}
+
+.download-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
 }
 
 .download-btn:hover {
     background: rgba(255, 255, 255, 0.2);
     border-color: rgba(255, 255, 255, 0.3);
+}
+
+.copy-link-btn {
+    background: rgba(0, 136, 204, 0.2);
+    color: #88ddff;
+    border-color: rgba(0, 136, 204, 0.3);
+}
+
+.copy-link-btn:hover {
+    background: rgba(0, 136, 204, 0.3);
+    border-color: rgba(0, 136, 204, 0.5);
 }
 
 /* Модальное окно */
@@ -267,10 +287,18 @@ body {
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
 }
 
-.modal-close {
+.modal-header {
     position: absolute;
-    top: -45px;
-    right: -45px;
+    top: -50px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 10px;
+}
+
+.modal-close {
     color: #ffffff;
     font-size: 2.5em;
     cursor: pointer;
@@ -287,6 +315,23 @@ body {
 .modal-close:hover {
     background: rgba(255, 255, 255, 0.2);
     transform: rotate(90deg);
+}
+
+.modal-copy-link {
+    background: rgba(0, 136, 204, 0.3);
+    color: #88ddff;
+    padding: 12px 25px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 136, 204, 0.5);
+    backdrop-filter: blur(5px);
+}
+
+.modal-copy-link:hover {
+    background: rgba(0, 136, 204, 0.5);
+    transform: scale(1.05);
 }
 
 .modal-caption {
@@ -384,12 +429,17 @@ footer p {
         height: 180px;
     }
     
-    .download-btn {
-        padding: 8px 12px;
+    .button-group {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .download-btn, .copy-link-btn {
+        padding: 8px;
         font-size: 0.8em;
     }
     
-    /* Адаптация кнопки Telegram для телефонов */
+    /* Адаптация кнопки Telegram */
     .telegram-button {
         bottom: 20px;
         right: 20px;
@@ -408,10 +458,20 @@ footer p {
         width: 95%;
     }
     
-    .modal-close {
+    .modal-header {
         top: -40px;
-        right: 0;
+        flex-direction: row-reverse;
+    }
+    
+    .modal-close {
+        width: 40px;
+        height: 40px;
         font-size: 2em;
+    }
+    
+    .modal-copy-link {
+        padding: 8px 15px;
+        font-size: 0.9em;
     }
     
     .modal-caption {
@@ -442,7 +502,6 @@ footer p {
         max-height: 70vh;
     }
     
-    /* Ещё меньше кнопка на очень маленьких экранах */
     .telegram-button {
         bottom: 15px;
         right: 15px;
