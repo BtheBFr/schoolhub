@@ -10,11 +10,9 @@ function transliterate(text) {
         if (index !== -1) {
             result += eng[index];
         } else {
-            // Если символ не русский (цифра, английская буква), оставляем как есть
             result += char;
         }
     }
-    // Убираем лишние дефисы и небуквенные символы
     result = result.replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-').replace(/^-|-$/g, '');
     return result;
 }
@@ -45,19 +43,32 @@ async function createButtons() {
         button.className = 'person-btn';
         button.textContent = person.name;
         button.onclick = () => {
-            // Обновляем URL для галереи
-            const slug = transliterate(person.name);
-            const newUrl = `${window.location.origin}${window.location.pathname}${slug}`;
-            window.history.pushState({}, '', newUrl);
-            
-            // Показываем галерею
-            showPhotos(person);
+            selectPerson(person);
         };
         container.appendChild(button);
     });
     
     // Проверяем URL при загрузке
     checkUrlPath(people);
+}
+
+// Выбор человека
+function selectPerson(person, photoIndex = -1) {
+    const slug = transliterate(person.name);
+    
+    // Формируем правильный URL
+    let newUrl;
+    if (photoIndex >= 0) {
+        newUrl = `/schoolhub/${slug}-${photoIndex + 1}`;
+    } else {
+        newUrl = `/schoolhub/${slug}`;
+    }
+    
+    // Обновляем URL без перезагрузки
+    window.history.pushState({}, '', newUrl);
+    
+    // Показываем галерею
+    showPhotos(person, photoIndex);
 }
 
 // Показываем фото выбранного человека
@@ -77,7 +88,7 @@ function showPhotos(person, photoIndex = -1) {
     copyGalleryBtn.onclick = (e) => {
         e.stopPropagation();
         const slug = transliterate(person.name);
-        const url = `${window.location.origin}${window.location.pathname}${slug}`;
+        const url = `${window.location.origin}/schoolhub/${slug}`;
         
         navigator.clipboard.writeText(url).then(() => {
             copyGalleryBtn.innerHTML = '<span class="copy-icon">✅</span><span class="copy-text">Скопировано!</span>';
@@ -88,7 +99,6 @@ function showPhotos(person, photoIndex = -1) {
     };
     
     person.photos.forEach((photo, index) => {
-        // Создаем путь к фото: images/имя папки/файл
         const folderName = person.name.toLowerCase().replace(/ /g, '_');
         const photoPath = `images/${folderName}/${photo}`;
         
@@ -105,11 +115,9 @@ function showPhotos(person, photoIndex = -1) {
         const caption = document.createElement('p');
         caption.textContent = `Фото ${index + 1}`;
         
-        // Группа кнопок
         const buttonGroup = document.createElement('div');
         buttonGroup.className = 'button-group';
         
-        // Кнопка скачивания
         const downloadBtn = document.createElement('button');
         downloadBtn.className = 'download-btn';
         downloadBtn.innerHTML = '⬇ Скачать';
@@ -140,7 +148,6 @@ function showPhotos(person, photoIndex = -1) {
             }
         };
         
-        // Кнопка копирования ссылки на фото
         const copyLinkBtn = document.createElement('button');
         copyLinkBtn.className = 'copy-link-btn';
         copyLinkBtn.innerHTML = '🔗 Скопировать';
@@ -148,8 +155,7 @@ function showPhotos(person, photoIndex = -1) {
             e.stopPropagation();
             
             const slug = transliterate(person.name);
-            const photoNumber = index + 1;
-            const url = `${window.location.origin}${window.location.pathname}${slug}-${photoNumber}`;
+            const url = `${window.location.origin}/schoolhub/${slug}-${index + 1}`;
             
             navigator.clipboard.writeText(url).then(() => {
                 copyLinkBtn.innerHTML = '✅ Готово';
@@ -162,14 +168,8 @@ function showPhotos(person, photoIndex = -1) {
         buttonGroup.appendChild(downloadBtn);
         buttonGroup.appendChild(copyLinkBtn);
         
-        // Открытие фото
         frame.onclick = () => {
-            // Обновляем URL с номером фото
-            const slug = transliterate(person.name);
-            const photoNumber = index + 1;
-            const newUrl = `${window.location.origin}${window.location.pathname}${slug}-${photoNumber}`;
-            window.history.pushState({}, '', newUrl);
-            
+            selectPerson(person, index);
             openModal(photoPath, `${person.name} - фото ${index + 1}`, person, index);
         };
         
@@ -181,7 +181,6 @@ function showPhotos(person, photoIndex = -1) {
     
     gallery.classList.add('active');
     
-    // Если указан индекс фото, открываем его
     if (photoIndex >= 0 && photoIndex < person.photos.length) {
         setTimeout(() => {
             const folderName = person.name.toLowerCase().replace(/ /g, '_');
@@ -197,17 +196,14 @@ function closeGallery() {
     currentPerson = null;
     currentPhotoIndex = -1;
     
-    // Возвращаемся на главную в URL
-    const newUrl = `${window.location.origin}${window.location.pathname}`;
-    window.history.pushState({}, '', newUrl);
+    // Возвращаемся на главную
+    window.history.pushState({}, '', '/schoolhub/');
 }
 
-// Модальное окно для просмотра фото
+// Модальное окно
 function openModal(imageSrc, caption, person, photoIndex) {
-    // Закрываем предыдущее модальное окно, если есть
     closeModal();
     
-    // Создаем модальное окно
     const modal = document.createElement('div');
     modal.id = 'imageModal';
     modal.className = 'modal';
@@ -223,28 +219,21 @@ function openModal(imageSrc, caption, person, photoIndex) {
     `;
     document.body.appendChild(modal);
     
-    // Показываем модальное окно
     setTimeout(() => {
         modal.classList.add('active');
     }, 10);
     
-    // Закрытие при клике на крестик
     modal.querySelector('.modal-close').onclick = () => {
         closeModal();
-        
-        // Возвращаем URL к галерее
+        // Возвращаемся к галерее (без фото)
         if (currentPerson) {
-            const slug = transliterate(currentPerson.name);
-            const newUrl = `${window.location.origin}${window.location.pathname}${slug}`;
-            window.history.pushState({}, '', newUrl);
+            selectPerson(currentPerson);
         }
     };
     
-    // Копирование ссылки на фото
     modal.querySelector('.modal-copy-link').onclick = () => {
         const slug = transliterate(person.name);
-        const photoNumber = photoIndex + 1;
-        const url = `${window.location.origin}${window.location.pathname}${slug}-${photoNumber}`;
+        const url = `${window.location.origin}/schoolhub/${slug}-${photoIndex + 1}`;
         
         navigator.clipboard.writeText(url).then(() => {
             const copyBtn = modal.querySelector('.modal-copy-link');
@@ -255,31 +244,21 @@ function openModal(imageSrc, caption, person, photoIndex) {
         });
     };
     
-    // Закрытие при клике вне фото
     modal.onclick = (e) => {
         if (e.target === modal) {
             closeModal();
-            
-            // Возвращаем URL к галерее
             if (currentPerson) {
-                const slug = transliterate(currentPerson.name);
-                const newUrl = `${window.location.origin}${window.location.pathname}${slug}`;
-                window.history.pushState({}, '', newUrl);
+                selectPerson(currentPerson);
             }
         }
     };
     
-    // Закрытие по клавише Escape
     const escapeHandler = (e) => {
         if (e.key === 'Escape') {
             closeModal();
             document.removeEventListener('keydown', escapeHandler);
-            
-            // Возвращаем URL к галерее
             if (currentPerson) {
-                const slug = transliterate(currentPerson.name);
-                const newUrl = `${window.location.origin}${window.location.pathname}${slug}`;
-                window.history.pushState({}, '', newUrl);
+                selectPerson(currentPerson);
             }
         }
     };
@@ -299,19 +278,27 @@ function closeModal() {
     document.body.style.overflow = '';
 }
 
-// Проверка пути URL
+// Проверка пути URL - ИСПРАВЛЕНО!
 function checkUrlPath(people) {
-    const path = window.location.pathname;
-    const basePath = '/schoolhub/'; // Путь к сайту
+    // Получаем путь без базового URL
+    let path = window.location.pathname;
     
-    let slug = path.replace(basePath, '');
+    // Убираем /schoolhub/ из начала
+    if (path.startsWith('/schoolhub/')) {
+        path = path.replace('/schoolhub/', '');
+    } else if (path === '/schoolhub') {
+        path = '';
+    }
     
-    if (!slug || slug === '') {
+    // Убираем слеши в начале и конце
+    path = path.replace(/^\/+|\/+$/g, '');
+    
+    if (!path || path === '') {
         return; // На главной
     }
     
     // Проверяем, есть ли номер фото
-    const match = slug.match(/(.+)-(\d+)$/);
+    const match = path.match(/(.+)-(\d+)$/);
     
     if (match) {
         // Есть номер фото
@@ -329,7 +316,7 @@ function checkUrlPath(people) {
         }
     } else {
         // Только человек
-        const person = people.find(p => transliterate(p.name) === slug);
+        const person = people.find(p => transliterate(p.name) === path);
         if (person) {
             showPhotos(person);
         }
@@ -342,5 +329,5 @@ window.addEventListener('popstate', async () => {
     checkUrlPath(people);
 });
 
-// Запускаем создание кнопок при загрузке страницы
+// Запускаем создание кнопок
 document.addEventListener('DOMContentLoaded', createButtons);
