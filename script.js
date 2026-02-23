@@ -29,77 +29,75 @@ async function loadPeople() {
     }
 }
 
-// Текущий выбранный человек и фото
+// Глобальные переменные
+let peopleList = [];
 let currentPerson = null;
 let currentPhotoIndex = -1;
 
-// Создаем кнопки для каждого человека
-async function createButtons() {
-    const people = await loadPeople();
+// Инициализация
+async function init() {
+    peopleList = await loadPeople();
+    createButtons();
+    checkUrl();
+}
+
+// Создаем кнопки
+function createButtons() {
     const container = document.getElementById('buttonsContainer');
+    container.innerHTML = '';
     
-    people.forEach(person => {
+    peopleList.forEach(person => {
         const button = document.createElement('button');
         button.className = 'person-btn';
         button.textContent = person.name;
-        button.onclick = () => {
-            selectPerson(person);
-        };
+        button.onclick = () => openGallery(person);
         container.appendChild(button);
     });
-    
-    // Проверяем URL при загрузке
-    checkUrlPath(people);
 }
 
-// Выбор человека
-function selectPerson(person, photoIndex = -1) {
-    const slug = transliterate(person.name);
+// Открыть галерею человека
+function openGallery(person, photoIndex = -1) {
+    currentPerson = person;
+    currentPhotoIndex = photoIndex;
     
-    // Формируем правильный URL
-    let newUrl;
+    // Обновляем URL
+    const slug = transliterate(person.name);
+    let newUrl = `/schoolhub/${slug}`;
     if (photoIndex >= 0) {
         newUrl = `/schoolhub/${slug}-${photoIndex + 1}`;
-    } else {
-        newUrl = `/schoolhub/${slug}`;
     }
-    
-    // Обновляем URL без перезагрузки
     window.history.pushState({}, '', newUrl);
     
     // Показываем галерею
-    showPhotos(person, photoIndex);
+    showGallery();
 }
 
-// Показываем фото выбранного человека
-function showPhotos(person, photoIndex = -1) {
+// Показать галерею
+function showGallery() {
+    if (!currentPerson) return;
+    
     const gallery = document.getElementById('gallery');
     const personName = document.getElementById('selectedPersonName');
     const photosGrid = document.getElementById('photosGrid');
     const copyGalleryBtn = document.getElementById('copyGalleryBtn');
     
-    currentPerson = person;
-    currentPhotoIndex = photoIndex;
-    
-    personName.textContent = person.name;
+    personName.textContent = currentPerson.name;
     photosGrid.innerHTML = '';
     
-    // Настраиваем кнопку копирования галереи
-    copyGalleryBtn.onclick = (e) => {
-        e.stopPropagation();
-        const slug = transliterate(person.name);
-        const url = `${window.location.origin}/schoolhub/${slug}`;
-        
-        navigator.clipboard.writeText(url).then(() => {
-            copyGalleryBtn.innerHTML = '<span class="copy-icon">✅</span><span class="copy-text">Скопировано!</span>';
-            setTimeout(() => {
-                copyGalleryBtn.innerHTML = '<span class="copy-icon">🔗</span><span class="copy-text">Галерея</span>';
-            }, 2000);
-        });
+    // Кнопка копирования галереи
+    copyGalleryBtn.onclick = () => {
+        const slug = transliterate(currentPerson.name);
+        const url = `https://bthebfr.github.io/schoolhub/${slug}`;
+        navigator.clipboard.writeText(url);
+        copyGalleryBtn.innerHTML = '✅ Скопировано!';
+        setTimeout(() => {
+            copyGalleryBtn.innerHTML = '🔗 Галерея';
+        }, 2000);
     };
     
-    person.photos.forEach((photo, index) => {
-        const folderName = person.name.toLowerCase().replace(/ /g, '_');
+    // Создаем фото
+    currentPerson.photos.forEach((photo, index) => {
+        const folderName = currentPerson.name.toLowerCase().replace(/ /g, '_');
         const photoPath = `images/${folderName}/${photo}`;
         
         const frame = document.createElement('div');
@@ -107,70 +105,45 @@ function showPhotos(person, photoIndex = -1) {
         
         const img = document.createElement('img');
         img.src = photoPath;
-        img.alt = `${person.name} - фото ${index + 1}`;
+        img.alt = `Фото ${index + 1}`;
         img.onerror = () => {
-            img.src = 'https://via.placeholder.com/300x300?text=Фото+не+найдено';
+            img.src = 'https://via.placeholder.com/300x300?text=Нет+фото';
         };
         
         const caption = document.createElement('p');
         caption.textContent = `Фото ${index + 1}`;
         
+        // Кнопки
         const buttonGroup = document.createElement('div');
         buttonGroup.className = 'button-group';
         
         const downloadBtn = document.createElement('button');
         downloadBtn.className = 'download-btn';
-        downloadBtn.innerHTML = '⬇ Скачать';
-        downloadBtn.onclick = async (e) => {
+        downloadBtn.textContent = '⬇ Скачать';
+        downloadBtn.onclick = (e) => {
             e.stopPropagation();
-            try {
-                const response = await fetch(photoPath);
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = photo;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-                
-                downloadBtn.innerHTML = '✅ Готово';
-                setTimeout(() => {
-                    downloadBtn.innerHTML = '⬇ Скачать';
-                }, 2000);
-            } catch (error) {
-                console.error('Ошибка скачивания:', error);
-                downloadBtn.innerHTML = '❌ Ошибка';
-                setTimeout(() => {
-                    downloadBtn.innerHTML = '⬇ Скачать';
-                }, 2000);
-            }
+            downloadPhoto(photoPath, photo);
         };
         
-        const copyLinkBtn = document.createElement('button');
-        copyLinkBtn.className = 'copy-link-btn';
-        copyLinkBtn.innerHTML = '🔗 Скопировать';
-        copyLinkBtn.onclick = (e) => {
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'copy-link-btn';
+        copyBtn.textContent = '🔗 Скопировать';
+        copyBtn.onclick = (e) => {
             e.stopPropagation();
-            
-            const slug = transliterate(person.name);
-            const url = `${window.location.origin}/schoolhub/${slug}-${index + 1}`;
-            
-            navigator.clipboard.writeText(url).then(() => {
-                copyLinkBtn.innerHTML = '✅ Готово';
-                setTimeout(() => {
-                    copyLinkBtn.innerHTML = '🔗 Скопировать';
-                }, 2000);
-            });
+            const slug = transliterate(currentPerson.name);
+            const url = `https://bthebfr.github.io/schoolhub/${slug}-${index + 1}`;
+            navigator.clipboard.writeText(url);
+            copyBtn.textContent = '✅ Готово';
+            setTimeout(() => {
+                copyBtn.textContent = '🔗 Скопировать';
+            }, 2000);
         };
         
         buttonGroup.appendChild(downloadBtn);
-        buttonGroup.appendChild(copyLinkBtn);
+        buttonGroup.appendChild(copyBtn);
         
         frame.onclick = () => {
-            selectPerson(person, index);
-            openModal(photoPath, `${person.name} - фото ${index + 1}`, person, index);
+            openPhoto(index);
         };
         
         frame.appendChild(img);
@@ -181,153 +154,155 @@ function showPhotos(person, photoIndex = -1) {
     
     gallery.classList.add('active');
     
-    if (photoIndex >= 0 && photoIndex < person.photos.length) {
+    // Если нужно открыть конкретное фото
+    if (currentPhotoIndex >= 0) {
         setTimeout(() => {
-            const folderName = person.name.toLowerCase().replace(/ /g, '_');
-            const photoPath = `images/${folderName}/${person.photos[photoIndex]}`;
-            openModal(photoPath, `${person.name} - фото ${photoIndex + 1}`, person, photoIndex);
+            openPhoto(currentPhotoIndex);
         }, 300);
     }
 }
 
-// Закрываем галерею
-function closeGallery() {
-    document.getElementById('gallery').classList.remove('active');
-    currentPerson = null;
-    currentPhotoIndex = -1;
+// Открыть фото
+function openPhoto(index) {
+    if (!currentPerson) return;
     
-    // Возвращаемся на главную
-    window.history.pushState({}, '', '/schoolhub/');
-}
-
-// Модальное окно
-function openModal(imageSrc, caption, person, photoIndex) {
-    closeModal();
+    const photo = currentPerson.photos[index];
+    const folderName = currentPerson.name.toLowerCase().replace(/ /g, '_');
+    const photoPath = `images/${folderName}/${photo}`;
+    const caption = `${currentPerson.name} - фото ${index + 1}`;
     
+    // Обновляем URL
+    const slug = transliterate(currentPerson.name);
+    window.history.pushState({}, '', `/schoolhub/${slug}-${index + 1}`);
+    
+    // Создаем модальное окно
     const modal = document.createElement('div');
+    modal.className = 'modal active';
     modal.id = 'imageModal';
-    modal.className = 'modal';
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-header">
                 <span class="modal-close">&times;</span>
                 <span class="modal-copy-link">🔗 Скопировать ссылку</span>
             </div>
-            <img src="${imageSrc}" alt="${caption}">
+            <img src="${photoPath}" alt="${caption}">
             <div class="modal-caption">${caption}</div>
         </div>
     `;
+    
     document.body.appendChild(modal);
+    document.body.style.overflow = 'hidden';
     
-    setTimeout(() => {
-        modal.classList.add('active');
-    }, 10);
-    
-    modal.querySelector('.modal-close').onclick = () => {
-        closeModal();
-        // Возвращаемся к галерее (без фото)
-        if (currentPerson) {
-            selectPerson(currentPerson);
-        }
-    };
-    
-    modal.querySelector('.modal-copy-link').onclick = () => {
-        const slug = transliterate(person.name);
-        const url = `${window.location.origin}/schoolhub/${slug}-${photoIndex + 1}`;
-        
-        navigator.clipboard.writeText(url).then(() => {
-            const copyBtn = modal.querySelector('.modal-copy-link');
-            copyBtn.innerHTML = '✅ Скопировано!';
-            setTimeout(() => {
-                copyBtn.innerHTML = '🔗 Скопировать ссылку';
-            }, 2000);
-        });
-    };
-    
+    // Закрытие
+    modal.querySelector('.modal-close').onclick = closeModal;
     modal.onclick = (e) => {
-        if (e.target === modal) {
-            closeModal();
-            if (currentPerson) {
-                selectPerson(currentPerson);
-            }
-        }
+        if (e.target === modal) closeModal();
     };
     
+    // Копирование ссылки
+    modal.querySelector('.modal-copy-link').onclick = () => {
+        const url = `https://bthebfr.github.io/schoolhub/${slug}-${index + 1}`;
+        navigator.clipboard.writeText(url);
+        const btn = modal.querySelector('.modal-copy-link');
+        btn.textContent = '✅ Скопировано!';
+        setTimeout(() => {
+            btn.textContent = '🔗 Скопировать ссылку';
+        }, 2000);
+    };
+    
+    // Escape
     const escapeHandler = (e) => {
         if (e.key === 'Escape') {
             closeModal();
             document.removeEventListener('keydown', escapeHandler);
-            if (currentPerson) {
-                selectPerson(currentPerson);
-            }
         }
     };
     document.addEventListener('keydown', escapeHandler);
-    
-    document.body.style.overflow = 'hidden';
 }
 
+// Закрыть модальное окно
 function closeModal() {
     const modal = document.getElementById('imageModal');
     if (modal) {
-        modal.classList.remove('active');
-        setTimeout(() => {
-            modal.remove();
-        }, 300);
+        modal.remove();
+        document.body.style.overflow = '';
     }
-    document.body.style.overflow = '';
+    
+    // Возвращаем URL к галерее
+    if (currentPerson) {
+        const slug = transliterate(currentPerson.name);
+        window.history.pushState({}, '', `/schoolhub/${slug}`);
+    }
 }
 
-// Проверка пути URL - ИСПРАВЛЕНО!
-function checkUrlPath(people) {
-    // Получаем путь без базового URL
+// Закрыть галерею
+function closeGallery() {
+    document.getElementById('gallery').classList.remove('active');
+    currentPerson = null;
+    currentPhotoIndex = -1;
+    window.history.pushState({}, '', '/schoolhub/');
+}
+
+// Скачать фото
+async function downloadPhoto(path, filename) {
+    try {
+        const response = await fetch(path);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error('Ошибка скачивания:', error);
+    }
+}
+
+// Проверка URL
+function checkUrl() {
     let path = window.location.pathname;
     
-    // Убираем /schoolhub/ из начала
+    // Убираем /schoolhub/
     if (path.startsWith('/schoolhub/')) {
         path = path.replace('/schoolhub/', '');
     } else if (path === '/schoolhub') {
         path = '';
     }
-    
-    // Убираем слеши в начале и конце
     path = path.replace(/^\/+|\/+$/g, '');
     
-    if (!path || path === '') {
-        return; // На главной
-    }
+    if (!path) return;
     
-    // Проверяем, есть ли номер фото
+    // Проверяем фото
     const match = path.match(/(.+)-(\d+)$/);
     
     if (match) {
-        // Есть номер фото
         const personSlug = match[1];
-        const photoNumber = parseInt(match[2]);
+        const photoNum = parseInt(match[2]);
         
-        const person = people.find(p => transliterate(p.name) === personSlug);
+        const person = peopleList.find(p => transliterate(p.name) === personSlug);
         if (person) {
-            const index = photoNumber - 1;
+            const index = photoNum - 1;
             if (index >= 0 && index < person.photos.length) {
-                showPhotos(person, index);
+                openGallery(person, index);
             } else {
-                showPhotos(person);
+                openGallery(person);
             }
         }
     } else {
-        // Только человек
-        const person = people.find(p => transliterate(p.name) === path);
+        const person = peopleList.find(p => transliterate(p.name) === path);
         if (person) {
-            showPhotos(person);
+            openGallery(person);
         }
     }
 }
 
-// Обработка кнопок назад/вперед
-window.addEventListener('popstate', async () => {
-    const people = await loadPeople();
-    checkUrlPath(people);
+// Слушаем кнопки назад/вперед
+window.addEventListener('popstate', () => {
+    location.reload();
 });
 
-// Запускаем создание кнопок
-document.addEventListener('DOMContentLoaded', createButtons);
+// Запуск
+document.addEventListener('DOMContentLoaded', init);
