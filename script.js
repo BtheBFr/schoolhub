@@ -10,6 +10,7 @@ function transliterate(text) {
         if (index !== -1) {
             result += eng[index];
         } else {
+            // Если символ не русский (цифра, английская буква), оставляем как есть
             result += char;
         }
     }
@@ -30,6 +31,10 @@ async function loadPeople() {
     }
 }
 
+// Текущий выбранный человек и фото
+let currentPerson = null;
+let currentPhotoIndex = -1;
+
 // Создаем кнопки для каждого человека
 async function createButtons() {
     const people = await loadPeople();
@@ -39,22 +44,48 @@ async function createButtons() {
         const button = document.createElement('button');
         button.className = 'person-btn';
         button.textContent = person.name;
-        button.onclick = () => showPhotos(person);
+        button.onclick = () => {
+            // Обновляем URL для галереи
+            const slug = transliterate(person.name);
+            const newUrl = `${window.location.origin}${window.location.pathname}${slug}`;
+            window.history.pushState({}, '', newUrl);
+            
+            // Показываем галерею
+            showPhotos(person);
+        };
         container.appendChild(button);
     });
     
-    // Проверяем, есть ли в URL параметры
-    checkUrlParams(people);
+    // Проверяем URL при загрузке
+    checkUrlPath(people);
 }
 
 // Показываем фото выбранного человека
-function showPhotos(person, photoIndex = null) {
+function showPhotos(person, photoIndex = -1) {
     const gallery = document.getElementById('gallery');
     const personName = document.getElementById('selectedPersonName');
     const photosGrid = document.getElementById('photosGrid');
+    const copyGalleryBtn = document.getElementById('copyGalleryBtn');
+    
+    currentPerson = person;
+    currentPhotoIndex = photoIndex;
     
     personName.textContent = person.name;
     photosGrid.innerHTML = '';
+    
+    // Настраиваем кнопку копирования галереи
+    copyGalleryBtn.onclick = (e) => {
+        e.stopPropagation();
+        const slug = transliterate(person.name);
+        const url = `${window.location.origin}${window.location.pathname}${slug}`;
+        
+        navigator.clipboard.writeText(url).then(() => {
+            copyGalleryBtn.innerHTML = '<span class="copy-icon">✅</span><span class="copy-text">Скопировано!</span>';
+            setTimeout(() => {
+                copyGalleryBtn.innerHTML = '<span class="copy-icon">🔗</span><span class="copy-text">Галерея</span>';
+            }, 2000);
+        });
+    };
     
     person.photos.forEach((photo, index) => {
         // Создаем путь к фото: images/имя папки/файл
@@ -109,28 +140,21 @@ function showPhotos(person, photoIndex = null) {
             }
         };
         
-        // Кнопка копирования ссылки
+        // Кнопка копирования ссылки на фото
         const copyLinkBtn = document.createElement('button');
         copyLinkBtn.className = 'copy-link-btn';
-        copyLinkBtn.innerHTML = '🔗 Скопировать ссылку';
+        copyLinkBtn.innerHTML = '🔗 Скопировать';
         copyLinkBtn.onclick = (e) => {
             e.stopPropagation();
             
-            // Создаем ЧЕЛОВЕЧЕСКИЙ URL с транслитерацией
-            const personSlug = transliterate(person.name);
+            const slug = transliterate(person.name);
             const photoNumber = index + 1;
-            const url = `${window.location.origin}${window.location.pathname}?p=${personSlug}&n=${photoNumber}`;
+            const url = `${window.location.origin}${window.location.pathname}${slug}-${photoNumber}`;
             
-            // Копируем в буфер обмена
             navigator.clipboard.writeText(url).then(() => {
-                copyLinkBtn.innerHTML = '✅ Скопировано!';
+                copyLinkBtn.innerHTML = '✅ Готово';
                 setTimeout(() => {
-                    copyLinkBtn.innerHTML = '🔗 Скопировать ссылку';
-                }, 2000);
-            }).catch(() => {
-                copyLinkBtn.innerHTML = '❌ Ошибка';
-                setTimeout(() => {
-                    copyLinkBtn.innerHTML = '🔗 Скопировать ссылку';
+                    copyLinkBtn.innerHTML = '🔗 Скопировать';
                 }, 2000);
             });
         };
@@ -138,8 +162,16 @@ function showPhotos(person, photoIndex = null) {
         buttonGroup.appendChild(downloadBtn);
         buttonGroup.appendChild(copyLinkBtn);
         
-        // Открытие фото в модальном окне
-        frame.onclick = () => openModal(photoPath, `${person.name} - фото ${index + 1}`, person, index);
+        // Открытие фото
+        frame.onclick = () => {
+            // Обновляем URL с номером фото
+            const slug = transliterate(person.name);
+            const photoNumber = index + 1;
+            const newUrl = `${window.location.origin}${window.location.pathname}${slug}-${photoNumber}`;
+            window.history.pushState({}, '', newUrl);
+            
+            openModal(photoPath, `${person.name} - фото ${index + 1}`, person, index);
+        };
         
         frame.appendChild(img);
         frame.appendChild(caption);
@@ -150,7 +182,7 @@ function showPhotos(person, photoIndex = null) {
     gallery.classList.add('active');
     
     // Если указан индекс фото, открываем его
-    if (photoIndex !== null && photoIndex >= 0 && photoIndex < person.photos.length) {
+    if (photoIndex >= 0 && photoIndex < person.photos.length) {
         setTimeout(() => {
             const folderName = person.name.toLowerCase().replace(/ /g, '_');
             const photoPath = `images/${folderName}/${person.photos[photoIndex]}`;
@@ -162,73 +194,60 @@ function showPhotos(person, photoIndex = null) {
 // Закрываем галерею
 function closeGallery() {
     document.getElementById('gallery').classList.remove('active');
+    currentPerson = null;
+    currentPhotoIndex = -1;
+    
+    // Возвращаемся на главную в URL
+    const newUrl = `${window.location.origin}${window.location.pathname}`;
+    window.history.pushState({}, '', newUrl);
 }
 
 // Модальное окно для просмотра фото
 function openModal(imageSrc, caption, person, photoIndex) {
-    // Создаем модальное окно, если его нет
-    let modal = document.getElementById('imageModal');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'imageModal';
-        modal.className = 'modal';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <span class="modal-close">&times;</span>
-                    <span class="modal-copy-link">🔗 Скопировать ссылку</span>
-                </div>
-                <img src="" alt="">
-                <div class="modal-caption"></div>
+    // Закрываем предыдущее модальное окно, если есть
+    closeModal();
+    
+    // Создаем модальное окно
+    const modal = document.createElement('div');
+    modal.id = 'imageModal';
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-close">&times;</span>
+                <span class="modal-copy-link">🔗 Скопировать ссылку</span>
             </div>
-        `;
-        document.body.appendChild(modal);
-        
-        // Закрытие при клике на крестик
-        modal.querySelector('.modal-close').onclick = closeModal;
-        
-        // Копирование ссылки
-        modal.querySelector('.modal-copy-link').onclick = () => {
-            const personSlug = transliterate(person.name);
-            const photoNumber = photoIndex + 1;
-            const url = `${window.location.origin}${window.location.pathname}?p=${personSlug}&n=${photoNumber}`;
-            
-            navigator.clipboard.writeText(url).then(() => {
-                const copyBtn = modal.querySelector('.modal-copy-link');
-                copyBtn.innerHTML = '✅ Скопировано!';
-                setTimeout(() => {
-                    copyBtn.innerHTML = '🔗 Скопировать ссылку';
-                }, 2000);
-            });
-        };
-        
-        // Закрытие при клике вне фото
-        modal.onclick = (e) => {
-            if (e.target === modal) closeModal();
-        };
-        
-        // Закрытие по клавише Escape
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && modal.classList.contains('active')) {
-                closeModal();
-            }
-        });
-    }
+            <img src="${imageSrc}" alt="${caption}">
+            <div class="modal-caption">${caption}</div>
+        </div>
+    `;
+    document.body.appendChild(modal);
     
-    const modalImg = modal.querySelector('img');
-    const modalCaption = modal.querySelector('.modal-caption');
-    const copyBtn = modal.querySelector('.modal-copy-link');
+    // Показываем модальное окно
+    setTimeout(() => {
+        modal.classList.add('active');
+    }, 10);
     
-    modalImg.src = imageSrc;
-    modalCaption.textContent = caption;
+    // Закрытие при клике на крестик
+    modal.querySelector('.modal-close').onclick = () => {
+        closeModal();
+        
+        // Возвращаем URL к галерее
+        if (currentPerson) {
+            const slug = transliterate(currentPerson.name);
+            const newUrl = `${window.location.origin}${window.location.pathname}${slug}`;
+            window.history.pushState({}, '', newUrl);
+        }
+    };
     
-    // Обновляем обработчик копирования для текущего фото
-    copyBtn.onclick = () => {
-        const personSlug = transliterate(person.name);
+    // Копирование ссылки на фото
+    modal.querySelector('.modal-copy-link').onclick = () => {
+        const slug = transliterate(person.name);
         const photoNumber = photoIndex + 1;
-        const url = `${window.location.origin}${window.location.pathname}?p=${personSlug}&n=${photoNumber}`;
+        const url = `${window.location.origin}${window.location.pathname}${slug}-${photoNumber}`;
         
         navigator.clipboard.writeText(url).then(() => {
+            const copyBtn = modal.querySelector('.modal-copy-link');
             copyBtn.innerHTML = '✅ Скопировано!';
             setTimeout(() => {
                 copyBtn.innerHTML = '🔗 Скопировать ссылку';
@@ -236,7 +255,36 @@ function openModal(imageSrc, caption, person, photoIndex) {
         });
     };
     
-    modal.classList.add('active');
+    // Закрытие при клике вне фото
+    modal.onclick = (e) => {
+        if (e.target === modal) {
+            closeModal();
+            
+            // Возвращаем URL к галерее
+            if (currentPerson) {
+                const slug = transliterate(currentPerson.name);
+                const newUrl = `${window.location.origin}${window.location.pathname}${slug}`;
+                window.history.pushState({}, '', newUrl);
+            }
+        }
+    };
+    
+    // Закрытие по клавише Escape
+    const escapeHandler = (e) => {
+        if (e.key === 'Escape') {
+            closeModal();
+            document.removeEventListener('keydown', escapeHandler);
+            
+            // Возвращаем URL к галерее
+            if (currentPerson) {
+                const slug = transliterate(currentPerson.name);
+                const newUrl = `${window.location.origin}${window.location.pathname}${slug}`;
+                window.history.pushState({}, '', newUrl);
+            }
+        }
+    };
+    document.addEventListener('keydown', escapeHandler);
+    
     document.body.style.overflow = 'hidden';
 }
 
@@ -244,34 +292,55 @@ function closeModal() {
     const modal = document.getElementById('imageModal');
     if (modal) {
         modal.classList.remove('active');
-        document.body.style.overflow = '';
+        setTimeout(() => {
+            modal.remove();
+        }, 300);
     }
+    document.body.style.overflow = '';
 }
 
-// Проверка параметров URL
-function checkUrlParams(people) {
-    const urlParams = new URLSearchParams(window.location.search);
-    const personSlug = urlParams.get('p');
-    const photoNumber = urlParams.get('n');
+// Проверка пути URL
+function checkUrlPath(people) {
+    const path = window.location.pathname;
+    const basePath = '/schoolhub/'; // Путь к сайту
     
-    if (personSlug && photoNumber) {
-        // Ищем человека по транслитерированному имени
+    let slug = path.replace(basePath, '');
+    
+    if (!slug || slug === '') {
+        return; // На главной
+    }
+    
+    // Проверяем, есть ли номер фото
+    const match = slug.match(/(.+)-(\d+)$/);
+    
+    if (match) {
+        // Есть номер фото
+        const personSlug = match[1];
+        const photoNumber = parseInt(match[2]);
+        
         const person = people.find(p => transliterate(p.name) === personSlug);
         if (person) {
-            const index = parseInt(photoNumber) - 1;
+            const index = photoNumber - 1;
             if (index >= 0 && index < person.photos.length) {
                 showPhotos(person, index);
             } else {
                 showPhotos(person);
             }
         }
-    } else if (personSlug) {
-        const person = people.find(p => transliterate(p.name) === personSlug);
+    } else {
+        // Только человек
+        const person = people.find(p => transliterate(p.name) === slug);
         if (person) {
             showPhotos(person);
         }
     }
 }
+
+// Обработка кнопок назад/вперед
+window.addEventListener('popstate', async () => {
+    const people = await loadPeople();
+    checkUrlPath(people);
+});
 
 // Запускаем создание кнопок при загрузке страницы
 document.addEventListener('DOMContentLoaded', createButtons);
