@@ -24,7 +24,13 @@
         <div class="gallery" id="gallery">
             <div class="gallery-header">
                 <h2 id="selectedPersonName"></h2>
-                <button class="close-btn" onclick="closeGallery()">×</button>
+                <div class="header-buttons">
+                    <button class="copy-gallery-btn" id="copyGalleryBtn" title="Копировать ссылку на галерею">
+                        <span class="copy-icon">🔗</span>
+                        <span class="copy-text">Галерея</span>
+                    </button>
+                    <button class="close-btn" onclick="closeGallery()">×</button>
+                </div>
             </div>
             <div class="photos-grid" id="photosGrid">
                 <!-- Фото будут загружаться сюда -->
