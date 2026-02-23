@@ -22,10 +22,13 @@ async function createButtons() {
         button.onclick = () => showPhotos(person);
         container.appendChild(button);
     });
+    
+    // Проверяем, есть ли в URL параметры
+    checkUrlParams(people);
 }
 
 // Показываем фото выбранного человека
-function showPhotos(person) {
+function showPhotos(person, photoIndex = null) {
     const gallery = document.getElementById('gallery');
     const personName = document.getElementById('selectedPersonName');
     const photosGrid = document.getElementById('photosGrid');
@@ -51,12 +54,16 @@ function showPhotos(person) {
         const caption = document.createElement('p');
         caption.textContent = `Фото ${index + 1}`;
         
+        // Группа кнопок
+        const buttonGroup = document.createElement('div');
+        buttonGroup.className = 'button-group';
+        
         // Кнопка скачивания
         const downloadBtn = document.createElement('button');
         downloadBtn.className = 'download-btn';
         downloadBtn.innerHTML = '⬇ Скачать';
         downloadBtn.onclick = async (e) => {
-            e.stopPropagation(); // Не открывать модальное окно при клике на кнопку
+            e.stopPropagation();
             try {
                 const response = await fetch(photoPath);
                 const blob = await response.blob();
@@ -82,16 +89,54 @@ function showPhotos(person) {
             }
         };
         
-        // Открытие фото в модальном окне при клике на frame
-        frame.onclick = () => openModal(photoPath, `${person.name} - фото ${index + 1}`);
+        // Кнопка копирования ссылки
+        const copyLinkBtn = document.createElement('button');
+        copyLinkBtn.className = 'copy-link-btn';
+        copyLinkBtn.innerHTML = '🔗 Скопировать ссылку';
+        copyLinkBtn.onclick = (e) => {
+            e.stopPropagation();
+            
+            // Создаем URL с параметрами
+            const personId = encodeURIComponent(person.name);
+            const photoId = encodeURIComponent(photo);
+            const url = `${window.location.origin}${window.location.pathname}?person=${personId}&photo=${photoId}`;
+            
+            // Копируем в буфер обмена
+            navigator.clipboard.writeText(url).then(() => {
+                copyLinkBtn.innerHTML = '✅ Скопировано!';
+                setTimeout(() => {
+                    copyLinkBtn.innerHTML = '🔗 Скопировать ссылку';
+                }, 2000);
+            }).catch(() => {
+                copyLinkBtn.innerHTML = '❌ Ошибка';
+                setTimeout(() => {
+                    copyLinkBtn.innerHTML = '🔗 Скопировать ссылку';
+                }, 2000);
+            });
+        };
+        
+        buttonGroup.appendChild(downloadBtn);
+        buttonGroup.appendChild(copyLinkBtn);
+        
+        // Открытие фото в модальном окне
+        frame.onclick = () => openModal(photoPath, `${person.name} - фото ${index + 1}`, person, index);
         
         frame.appendChild(img);
         frame.appendChild(caption);
-        frame.appendChild(downloadBtn);
+        frame.appendChild(buttonGroup);
         photosGrid.appendChild(frame);
     });
     
     gallery.classList.add('active');
+    
+    // Если указан индекс фото, открываем его
+    if (photoIndex !== null && photoIndex >= 0 && photoIndex < person.photos.length) {
+        setTimeout(() => {
+            const folderName = person.name.toLowerCase().replace(/ /g, '_');
+            const photoPath = `images/${folderName}/${person.photos[photoIndex]}`;
+            openModal(photoPath, `${person.name} - фото ${photoIndex + 1}`, person, photoIndex);
+        }, 300);
+    }
 }
 
 // Закрываем галерею
@@ -100,7 +145,7 @@ function closeGallery() {
 }
 
 // Модальное окно для просмотра фото
-function openModal(imageSrc, caption) {
+function openModal(imageSrc, caption, person, photoIndex) {
     // Создаем модальное окно, если его нет
     let modal = document.getElementById('imageModal');
     if (!modal) {
@@ -109,7 +154,10 @@ function openModal(imageSrc, caption) {
         modal.className = 'modal';
         modal.innerHTML = `
             <div class="modal-content">
-                <span class="modal-close">&times;</span>
+                <div class="modal-header">
+                    <span class="modal-close">&times;</span>
+                    <span class="modal-copy-link">🔗 Скопировать ссылку</span>
+                </div>
                 <img src="" alt="">
                 <div class="modal-caption"></div>
             </div>
@@ -118,6 +166,21 @@ function openModal(imageSrc, caption) {
         
         // Закрытие при клике на крестик
         modal.querySelector('.modal-close').onclick = closeModal;
+        
+        // Копирование ссылки
+        modal.querySelector('.modal-copy-link').onclick = () => {
+            const personId = encodeURIComponent(person.name);
+            const photoId = encodeURIComponent(person.photos[photoIndex]);
+            const url = `${window.location.origin}${window.location.pathname}?person=${personId}&photo=${photoId}`;
+            
+            navigator.clipboard.writeText(url).then(() => {
+                const copyBtn = modal.querySelector('.modal-copy-link');
+                copyBtn.innerHTML = '✅ Скопировано!';
+                setTimeout(() => {
+                    copyBtn.innerHTML = '🔗 Скопировать ссылку';
+                }, 2000);
+            });
+        };
         
         // Закрытие при клике вне фото
         modal.onclick = (e) => {
@@ -134,12 +197,26 @@ function openModal(imageSrc, caption) {
     
     const modalImg = modal.querySelector('img');
     const modalCaption = modal.querySelector('.modal-caption');
+    const copyBtn = modal.querySelector('.modal-copy-link');
     
     modalImg.src = imageSrc;
     modalCaption.textContent = caption;
-    modal.classList.add('active');
     
-    // Блокируем скролл страницы
+    // Обновляем обработчик копирования для текущего фото
+    copyBtn.onclick = () => {
+        const personId = encodeURIComponent(person.name);
+        const photoId = encodeURIComponent(person.photos[photoIndex]);
+        const url = `${window.location.origin}${window.location.pathname}?person=${personId}&photo=${photoId}`;
+        
+        navigator.clipboard.writeText(url).then(() => {
+            copyBtn.innerHTML = '✅ Скопировано!';
+            setTimeout(() => {
+                copyBtn.innerHTML = '🔗 Скопировать ссылку';
+            }, 2000);
+        });
+    };
+    
+    modal.classList.add('active');
     document.body.style.overflow = 'hidden';
 }
 
@@ -147,7 +224,31 @@ function closeModal() {
     const modal = document.getElementById('imageModal');
     if (modal) {
         modal.classList.remove('active');
-        document.body.style.overflow = ''; // Возвращаем скролл
+        document.body.style.overflow = '';
+    }
+}
+
+// Проверка параметров URL
+function checkUrlParams(people) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const personName = urlParams.get('person');
+    const photoName = urlParams.get('photo');
+    
+    if (personName && photoName) {
+        const person = people.find(p => p.name === decodeURIComponent(personName));
+        if (person) {
+            const photoIndex = person.photos.findIndex(p => p === decodeURIComponent(photoName));
+            if (photoIndex !== -1) {
+                showPhotos(person, photoIndex);
+            } else {
+                showPhotos(person);
+            }
+        }
+    } else if (personName) {
+        const person = people.find(p => p.name === decodeURIComponent(personName));
+        if (person) {
+            showPhotos(person);
+        }
     }
 }
 
