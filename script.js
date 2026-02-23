@@ -1,3 +1,23 @@
+// Функция для транслитерации
+function transliterate(text) {
+    const rus = ['а','б','в','г','д','е','ё','ж','з','и','й','к','л','м','н','о','п','р','с','т','у','ф','х','ц','ч','ш','щ','ъ','ы','ь','э','ю','я',' '];
+    const eng = ['a','b','v','g','d','e','e','zh','z','i','y','k','l','m','n','o','p','r','s','t','u','f','kh','ts','ch','sh','shch','','y','','e','yu','ya','-'];
+    
+    let result = '';
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i].toLowerCase();
+        const index = rus.indexOf(char);
+        if (index !== -1) {
+            result += eng[index];
+        } else {
+            result += char;
+        }
+    }
+    // Убираем лишние дефисы и небуквенные символы
+    result = result.replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    return result;
+}
+
 // Загружаем данные о людях
 async function loadPeople() {
     try {
@@ -96,10 +116,10 @@ function showPhotos(person, photoIndex = null) {
         copyLinkBtn.onclick = (e) => {
             e.stopPropagation();
             
-            // Создаем URL с параметрами
-            const personId = encodeURIComponent(person.name);
-            const photoId = encodeURIComponent(photo);
-            const url = `${window.location.origin}${window.location.pathname}?person=${personId}&photo=${photoId}`;
+            // Создаем ЧЕЛОВЕЧЕСКИЙ URL с транслитерацией
+            const personSlug = transliterate(person.name);
+            const photoNumber = index + 1;
+            const url = `${window.location.origin}${window.location.pathname}?p=${personSlug}&n=${photoNumber}`;
             
             // Копируем в буфер обмена
             navigator.clipboard.writeText(url).then(() => {
@@ -169,9 +189,9 @@ function openModal(imageSrc, caption, person, photoIndex) {
         
         // Копирование ссылки
         modal.querySelector('.modal-copy-link').onclick = () => {
-            const personId = encodeURIComponent(person.name);
-            const photoId = encodeURIComponent(person.photos[photoIndex]);
-            const url = `${window.location.origin}${window.location.pathname}?person=${personId}&photo=${photoId}`;
+            const personSlug = transliterate(person.name);
+            const photoNumber = photoIndex + 1;
+            const url = `${window.location.origin}${window.location.pathname}?p=${personSlug}&n=${photoNumber}`;
             
             navigator.clipboard.writeText(url).then(() => {
                 const copyBtn = modal.querySelector('.modal-copy-link');
@@ -204,9 +224,9 @@ function openModal(imageSrc, caption, person, photoIndex) {
     
     // Обновляем обработчик копирования для текущего фото
     copyBtn.onclick = () => {
-        const personId = encodeURIComponent(person.name);
-        const photoId = encodeURIComponent(person.photos[photoIndex]);
-        const url = `${window.location.origin}${window.location.pathname}?person=${personId}&photo=${photoId}`;
+        const personSlug = transliterate(person.name);
+        const photoNumber = photoIndex + 1;
+        const url = `${window.location.origin}${window.location.pathname}?p=${personSlug}&n=${photoNumber}`;
         
         navigator.clipboard.writeText(url).then(() => {
             copyBtn.innerHTML = '✅ Скопировано!';
@@ -231,21 +251,22 @@ function closeModal() {
 // Проверка параметров URL
 function checkUrlParams(people) {
     const urlParams = new URLSearchParams(window.location.search);
-    const personName = urlParams.get('person');
-    const photoName = urlParams.get('photo');
+    const personSlug = urlParams.get('p');
+    const photoNumber = urlParams.get('n');
     
-    if (personName && photoName) {
-        const person = people.find(p => p.name === decodeURIComponent(personName));
+    if (personSlug && photoNumber) {
+        // Ищем человека по транслитерированному имени
+        const person = people.find(p => transliterate(p.name) === personSlug);
         if (person) {
-            const photoIndex = person.photos.findIndex(p => p === decodeURIComponent(photoName));
-            if (photoIndex !== -1) {
-                showPhotos(person, photoIndex);
+            const index = parseInt(photoNumber) - 1;
+            if (index >= 0 && index < person.photos.length) {
+                showPhotos(person, index);
             } else {
                 showPhotos(person);
             }
         }
-    } else if (personName) {
-        const person = people.find(p => p.name === decodeURIComponent(personName));
+    } else if (personSlug) {
+        const person = people.find(p => transliterate(p.name) === personSlug);
         if (person) {
             showPhotos(person);
         }
