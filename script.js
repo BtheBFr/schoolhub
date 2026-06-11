@@ -17,7 +17,19 @@ function transliterate(text) {
     return result;
 }
 
-// Получить инициалы для аватара
+// Функция для сортировки по имени (по алфавиту)
+function sortByName(a, b) {
+    return a.name.localeCompare(b.name, 'ru');
+}
+
+// Получить аватарку или инициалы
+function getAvatarHtml(person) {
+    if (person.avatar) {
+        return `<img src="${person.avatar}" alt="${person.name}" onerror="this.parentElement.innerHTML='${getInitials(person.name)}'">`;
+    }
+    return getInitials(person.name);
+}
+
 function getInitials(name) {
     const parts = name.split(' ');
     if (parts.length >= 2) {
@@ -36,7 +48,9 @@ async function loadPeople() {
     try {
         const response = await fetch('people.json');
         const data = await response.json();
-        return data.people;
+        // Сортируем людей по алфавиту
+        const sorted = [...data.people].sort(sortByName);
+        return sorted;
     } catch (error) {
         console.error('Ошибка загрузки данных:', error);
         return [];
@@ -54,7 +68,6 @@ function hideLoader() {
     }
 }
 
-// Показать анимацию загрузки
 function showLoader() {
     const existingLoader = document.getElementById('loaderOverlay');
     if (existingLoader) return;
@@ -76,7 +89,7 @@ function renderCards(searchTerm = '') {
     const container = document.getElementById('cardsGrid');
     if (!container) return;
     
-    let filteredPeople = peopleList;
+    let filteredPeople = [...peopleList];
     if (searchTerm) {
         const lowerSearch = searchTerm.toLowerCase();
         filteredPeople = peopleList.filter(person => 
@@ -90,16 +103,31 @@ function renderCards(searchTerm = '') {
     }
     
     container.innerHTML = filteredPeople.map(person => `
-        <div class="person-card" data-name="${person.name}">
-            <div class="person-avatar">${getInitials(person.name)}</div>
+        <div class="person-card" data-name="${person.name}" data-avatar="${person.avatar || ''}">
+            <div class="person-avatar">${getAvatarHtml(person)}</div>
             <h3>${person.name}</h3>
             <div class="photo-count">📸 ${person.photos.length} фото</div>
         </div>
     `).join('');
     
+    // Обновляем аватарки для тех, у кого есть img
+    document.querySelectorAll('.person-card').forEach(card => {
+        const avatarDiv = card.querySelector('.person-avatar');
+        const avatarSrc = card.dataset.avatar;
+        if (avatarSrc && avatarDiv) {
+            const img = avatarDiv.querySelector('img');
+            if (img) {
+                img.onerror = () => {
+                    avatarDiv.innerHTML = getInitials(card.dataset.name);
+                };
+            }
+        }
+    });
+    
     // Добавляем обработчики
     document.querySelectorAll('.person-card').forEach(card => {
-        card.addEventListener('click', () => {
+        card.addEventListener('click', (e) => {
+            e.stopPropagation();
             const name = card.dataset.name;
             const person = peopleList.find(p => p.name === name);
             if (person) openAlbumModal(person);
@@ -107,18 +135,19 @@ function renderCards(searchTerm = '') {
     });
 }
 
-// Открыть альбом человека (отдельная вкладка)
+// Открыть альбом человека
 function openAlbumModal(person, photoIndex = -1) {
+    // Закрываем предыдущий альбом если есть
+    const existingModal = document.getElementById('albumModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
     currentPerson = person;
     currentPhotoIndex = photoIndex;
     
-    // Обновляем URL
     const slug = transliterate(person.name);
     window.location.hash = slug;
-    
-    // Создаём модальное окно альбома
-    const existingModal = document.getElementById('albumModal');
-    if (existingModal) existingModal.remove();
     
     const modal = document.createElement('div');
     modal.id = 'albumModal';
@@ -146,7 +175,6 @@ function openAlbumModal(person, photoIndex = -1) {
     document.body.appendChild(modal);
     document.body.style.overflow = 'hidden';
     
-    // Заполняем фото
     const photosGrid = modal.querySelector('#albumPhotosGrid');
     person.photos.forEach((photo, idx) => {
         const folderName = person.name.toLowerCase().replace(/ /g, '_');
@@ -165,21 +193,21 @@ function openAlbumModal(person, photoIndex = -1) {
         photosGrid.appendChild(photoDiv);
     });
     
-    // Закрытие
-    modal.querySelector('.album-close').addEventListener('click', () => {
+    const closeBtn = modal.querySelector('.album-close');
+    closeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
         closeAlbumModal();
     });
+    
     modal.addEventListener('click', (e) => {
         if (e.target === modal) closeAlbumModal();
     });
     
-    // Если нужно открыть конкретное фото
     if (photoIndex >= 0) {
         setTimeout(() => openImageModal(person, photoIndex), 100);
     }
 }
 
-// Закрыть альбом
 function closeAlbumModal() {
     const modal = document.getElementById('albumModal');
     if (modal) {
@@ -191,17 +219,14 @@ function closeAlbumModal() {
     window.location.hash = '';
 }
 
-// Открыть увеличенное фото
 function openImageModal(person, index) {
     const photo = person.photos[index];
     const folderName = person.name.toLowerCase().replace(/ /g, '_');
     const photoPath = `images/${folderName}/${photo}`;
     
-    // Обновляем URL
     const slug = transliterate(person.name);
     window.location.hash = `${slug}-${index + 1}`;
     
-    // Создаём модальное окно для фото
     const existingModal = document.getElementById('imageModal');
     if (existingModal) existingModal.remove();
     
@@ -219,46 +244,35 @@ function openImageModal(person, index) {
     document.body.appendChild(modal);
     document.body.style.overflow = 'hidden';
     
-    // Закрытие
-    const closeBtn = modal.querySelector('.image-modal-close');
-    closeBtn.addEventListener('click', () => {
+    const closeModalFunc = () => {
         modal.remove();
         document.body.style.overflow = '';
-        // Возвращаемся к альбому
-        const slug = transliterate(person.name);
         window.location.hash = slug;
         if (currentPerson) {
-            openAlbumModal(currentPerson);
+            // Переоткрываем альбом на том же месте
+            const existingAlbum = document.getElementById('albumModal');
+            if (!existingAlbum) {
+                openAlbumModal(currentPerson);
+            }
         }
-    });
+    };
+    
+    const closeBtn = modal.querySelector('.image-modal-close');
+    closeBtn.addEventListener('click', closeModalFunc);
     
     modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            modal.remove();
-            document.body.style.overflow = '';
-            window.location.hash = slug;
-            if (currentPerson) {
-                openAlbumModal(currentPerson);
-            }
-        }
+        if (e.target === modal) closeModalFunc();
     });
     
-    // Escape
     const escapeHandler = (e) => {
         if (e.key === 'Escape') {
-            modal.remove();
-            document.body.style.overflow = '';
-            window.location.hash = slug;
-            if (currentPerson) {
-                openAlbumModal(currentPerson);
-            }
+            closeModalFunc();
             document.removeEventListener('keydown', escapeHandler);
         }
     };
     document.addEventListener('keydown', escapeHandler);
 }
 
-// Проверка URL и открытие
 function checkUrlAndOpen() {
     let hash = window.location.hash.substring(1);
     if (!hash || !peopleList.length) return;
@@ -285,38 +299,22 @@ function checkUrlAndOpen() {
     }
 }
 
-// Инициализация
 async function init() {
     showLoader();
-    
     peopleList = await loadPeople();
     
-    // Создаём сетку карточек
     const container = document.querySelector('.container');
     const existingGrid = document.getElementById('cardsGrid');
     if (!existingGrid) {
         const gridDiv = document.createElement('div');
         gridDiv.id = 'cardsGrid';
         gridDiv.className = 'cards-grid';
-        
-        const buttonsContainer = document.getElementById('buttonsContainer');
-        if (buttonsContainer) buttonsContainer.remove();
-        
-        const galleryDiv = document.getElementById('gallery');
-        if (galleryDiv) galleryDiv.remove();
-        
-        const searchDiv = document.querySelector('.search-container');
-        if (searchDiv) {
-            searchDiv.insertAdjacentElement('afterend', gridDiv);
-        } else {
-            container.appendChild(gridDiv);
-        }
+        container.appendChild(gridDiv);
     }
     
     renderCards();
     hideLoader();
     
-    // Поиск
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
@@ -324,11 +322,9 @@ async function init() {
         });
     }
     
-    // Проверяем URL
     checkUrlAndOpen();
 }
 
-// Слушаем изменения хэша
 window.addEventListener('hashchange', () => {
     if (document.getElementById('albumModal')) {
         closeAlbumModal();
@@ -336,5 +332,4 @@ window.addEventListener('hashchange', () => {
     checkUrlAndOpen();
 });
 
-// Запуск
 document.addEventListener('DOMContentLoaded', init);
