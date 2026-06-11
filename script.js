@@ -23,13 +23,6 @@ function sortByName(a, b) {
 }
 
 // Получить аватарку или инициалы
-function getAvatarHtml(person) {
-    if (person.avatar) {
-        return `<img src="${person.avatar}" alt="${person.name}" onerror="this.parentElement.innerHTML='${getInitials(person.name)}'">`;
-    }
-    return getInitials(person.name);
-}
-
 function getInitials(name) {
     const parts = name.split(' ');
     if (parts.length >= 2) {
@@ -38,17 +31,23 @@ function getInitials(name) {
     return name.substring(0, 2).toUpperCase();
 }
 
+function getAvatarHtml(person) {
+    if (person.avatar) {
+        return `<img src="${person.avatar}" alt="${person.name}" onerror="this.parentElement.innerHTML='${getInitials(person.name)}'">`;
+    }
+    return getInitials(person.name);
+}
+
 // Глобальные переменные
 let peopleList = [];
 let currentPerson = null;
-let currentPhotoIndex = -1;
+let isOpeningFromHash = false; // Флаг, чтобы не было двойного открытия
 
 // Загрузка данных
 async function loadPeople() {
     try {
         const response = await fetch('people.json');
         const data = await response.json();
-        // Сортируем людей по алфавиту
         const sorted = [...data.people].sort(sortByName);
         return sorted;
     } catch (error) {
@@ -110,8 +109,9 @@ function renderCards(searchTerm = '') {
         </div>
     `).join('');
     
-    // Обновляем аватарки для тех, у кого есть img
+    // Обработчики для карточек
     document.querySelectorAll('.person-card').forEach(card => {
+        // Исправляем отображение аватарок если картинка не загрузилась
         const avatarDiv = card.querySelector('.person-avatar');
         const avatarSrc = card.dataset.avatar;
         if (avatarSrc && avatarDiv) {
@@ -122,15 +122,15 @@ function renderCards(searchTerm = '') {
                 };
             }
         }
-    });
-    
-    // Добавляем обработчики
-    document.querySelectorAll('.person-card').forEach(card => {
+        
+        // Клик по карточке
         card.addEventListener('click', (e) => {
             e.stopPropagation();
             const name = card.dataset.name;
             const person = peopleList.find(p => p.name === name);
-            if (person) openAlbumModal(person);
+            if (person) {
+                openAlbumModal(person);
+            }
         });
     });
 }
@@ -144,10 +144,13 @@ function openAlbumModal(person, photoIndex = -1) {
     }
     
     currentPerson = person;
-    currentPhotoIndex = photoIndex;
     
     const slug = transliterate(person.name);
+    
+    // Обновляем URL без запуска hashchange
+    isOpeningFromHash = true;
     window.location.hash = slug;
+    setTimeout(() => { isOpeningFromHash = false; }, 100);
     
     const modal = document.createElement('div');
     modal.id = 'albumModal';
@@ -175,6 +178,7 @@ function openAlbumModal(person, photoIndex = -1) {
     document.body.appendChild(modal);
     document.body.style.overflow = 'hidden';
     
+    // Заполняем фото
     const photosGrid = modal.querySelector('#albumPhotosGrid');
     person.photos.forEach((photo, idx) => {
         const folderName = person.name.toLowerCase().replace(/ /g, '_');
@@ -193,6 +197,7 @@ function openAlbumModal(person, photoIndex = -1) {
         photosGrid.appendChild(photoDiv);
     });
     
+    // Закрытие
     const closeBtn = modal.querySelector('.album-close');
     closeBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -203,6 +208,7 @@ function openAlbumModal(person, photoIndex = -1) {
         if (e.target === modal) closeAlbumModal();
     });
     
+    // Если нужно открыть конкретное фото
     if (photoIndex >= 0) {
         setTimeout(() => openImageModal(person, photoIndex), 100);
     }
@@ -215,8 +221,13 @@ function closeAlbumModal() {
         document.body.style.overflow = '';
     }
     currentPerson = null;
-    currentPhotoIndex = -1;
-    window.location.hash = '';
+    
+    // Убираем хэш, если это не открытие фото
+    if (!window.location.hash.includes('-')) {
+        isOpeningFromHash = true;
+        window.location.hash = '';
+        setTimeout(() => { isOpeningFromHash = false; }, 100);
+    }
 }
 
 function openImageModal(person, index) {
@@ -225,7 +236,11 @@ function openImageModal(person, index) {
     const photoPath = `images/${folderName}/${photo}`;
     
     const slug = transliterate(person.name);
+    
+    // Обновляем URL
+    isOpeningFromHash = true;
     window.location.hash = `${slug}-${index + 1}`;
+    setTimeout(() => { isOpeningFromHash = false; }, 100);
     
     const existingModal = document.getElementById('imageModal');
     if (existingModal) existingModal.remove();
@@ -247,9 +262,12 @@ function openImageModal(person, index) {
     const closeModalFunc = () => {
         modal.remove();
         document.body.style.overflow = '';
+        // Возвращаемся к хэшу альбома
+        isOpeningFromHash = true;
         window.location.hash = slug;
+        setTimeout(() => { isOpeningFromHash = false; }, 100);
+        // Переоткрываем альбом
         if (currentPerson) {
-            // Переоткрываем альбом на том же месте
             const existingAlbum = document.getElementById('albumModal');
             if (!existingAlbum) {
                 openAlbumModal(currentPerson);
@@ -274,8 +292,19 @@ function openImageModal(person, index) {
 }
 
 function checkUrlAndOpen() {
+    // Если открытие происходит из кода, игнорируем
+    if (isOpeningFromHash) return;
+    
     let hash = window.location.hash.substring(1);
     if (!hash || !peopleList.length) return;
+    
+    // Если альбом уже открыт и это тот же человек, не открываем заново
+    if (currentPerson && transliterate(currentPerson.name) === hash) {
+        return;
+    }
+    
+    // Если открыто модальное окно с фото, не мешаем
+    if (document.getElementById('imageModal')) return;
     
     const match = hash.match(/(.+)-(\d+)$/);
     
@@ -293,7 +322,7 @@ function checkUrlAndOpen() {
         }
     } else {
         const person = peopleList.find(p => transliterate(p.name) === hash);
-        if (person) {
+        if (person && (!currentPerson || currentPerson.name !== person.name)) {
             openAlbumModal(person);
         }
     }
@@ -322,13 +351,25 @@ async function init() {
         });
     }
     
-    checkUrlAndOpen();
+    // Проверяем URL после загрузки
+    setTimeout(() => {
+        checkUrlAndOpen();
+    }, 100);
 }
 
+// Слушаем изменения хэша
 window.addEventListener('hashchange', () => {
-    if (document.getElementById('albumModal')) {
-        closeAlbumModal();
+    // Игнорируем, если это внутреннее изменение
+    if (isOpeningFromHash) return;
+    
+    // Закрываем альбом перед открытием нового
+    const existingAlbum = document.getElementById('albumModal');
+    if (existingAlbum) {
+        existingAlbum.remove();
+        document.body.style.overflow = '';
+        currentPerson = null;
     }
+    
     checkUrlAndOpen();
 });
 
