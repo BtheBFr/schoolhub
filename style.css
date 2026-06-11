@@ -5,647 +5,479 @@
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #1e1e2f 0%, #2a2a40 100%);
+    font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    background: #0a0a0f;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    color: #e0e0e0;
+    color: #e8e8f0;
     position: relative;
 }
 
+/* Импорт шрифта Inter */
+@import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
+
+/* Анимация загрузки */
+.loader-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #0a0a0f;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.loader-overlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.loader {
+    text-align: center;
+}
+
+.loader-spinner {
+    width: 60px;
+    height: 60px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top-color: #6366f1;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+.loader p {
+    color: #6366f1;
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+    font-weight: 500;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
 .container {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
     padding: 20px;
     flex: 1;
-    padding-bottom: 100px; /* Отступ для кнопки Telegram */
 }
 
-/* Стили для кнопки Telegram */
+/* Плавающая кнопка Telegram */
 .telegram-button {
     position: fixed;
     bottom: 30px;
     right: 30px;
-    background: linear-gradient(135deg, #0088cc, #005f8c);
+    background: linear-gradient(135deg, #1e293b, #0f172a);
     color: white;
-    padding: 15px 25px;
-    border-radius: 50px;
+    padding: 14px 24px;
+    border-radius: 40px;
     text-decoration: none;
     display: flex;
     align-items: center;
     gap: 10px;
-    box-shadow: 0 4px 15px rgba(0, 136, 204, 0.3);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
     z-index: 1000;
     transition: all 0.3s ease;
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(5px);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    backdrop-filter: blur(10px);
     font-weight: 500;
-    letter-spacing: 0.5px;
+    font-family: 'Inter', sans-serif;
 }
 
 .telegram-button:hover {
     transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(0, 136, 204, 0.5);
-    background: linear-gradient(135deg, #0099dd, #006f9c);
+    box-shadow: 0 8px 30px rgba(99, 102, 241, 0.3);
+    border-color: rgba(99, 102, 241, 0.6);
 }
 
 .telegram-icon {
-    font-size: 1.5em;
-    filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
-}
-
-.telegram-text {
-    font-size: 1em;
-    white-space: nowrap;
+    font-size: 1.3em;
 }
 
 .title {
     text-align: center;
-    color: #ffffff;
-    font-size: 3em;
-    margin-top: 40px;
-    text-shadow: 0 2px 10px rgba(255,255,255,0.1);
-    animation: fadeInDown 1s ease;
-    letter-spacing: 2px;
-    font-weight: 300;
+    font-size: 3.5em;
+    margin-top: 30px;
+    background: linear-gradient(135deg, #ffffff, #a5b4fc);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-weight: 700;
+    letter-spacing: -0.02em;
 }
 
 .subtitle {
     text-align: center;
-    color: #b0b0b0;
-    font-size: 1.2em;
-    margin-bottom: 50px;
-    animation: fadeInUp 1s ease 0.3s both;
-    font-weight: 300;
-}
-
-.buttons-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 15px;
-    margin-bottom: 40px;
-    animation: fadeIn 1s ease 0.6s both;
-    padding: 0 10px;
-}
-
-.person-btn {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 15px 30px;
-    border-radius: 50px;
+    color: #8b8b9f;
     font-size: 1.1em;
+    margin-bottom: 40px;
     font-weight: 400;
+}
+
+/* Поиск */
+.search-container {
+    max-width: 500px;
+    margin: 0 auto 40px;
+    padding: 0 20px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 14px 24px;
+    background: rgba(30, 30, 45, 0.8);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 50px;
+    font-size: 1rem;
     color: #ffffff;
-    cursor: pointer;
+    font-family: 'Inter', sans-serif;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    backdrop-filter: blur(5px);
-    flex: 0 1 auto;
-    min-width: 200px;
-}
-
-.person-btn:hover {
-    transform: translateY(-3px);
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.3);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-}
-
-.gallery {
-    background: rgba(30, 30, 30, 0.7);
     backdrop-filter: blur(10px);
-    border-radius: 30px;
-    padding: 30px;
-    display: none;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-    animation: slideUp 0.5s ease;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    margin-bottom: 20px;
 }
 
-.gallery.active {
-    display: block;
+.search-input:focus {
+    outline: none;
+    border-color: #6366f1;
+    background: rgba(30, 30, 45, 1);
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
 }
 
-.gallery-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    flex-wrap: wrap;
-    gap: 15px;
+.search-input::placeholder {
+    color: #6b6b85;
 }
 
-.gallery-header h2 {
-    color: #ffffff;
-    font-size: 2em;
-    font-weight: 300;
-    text-shadow: 0 2px 5px rgba(0,0,0,0.3);
-    word-break: break-word;
-}
-
-.header-buttons {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
-
-.copy-gallery-btn {
-    background: rgba(0, 136, 204, 0.2);
-    border: 1px solid rgba(0, 136, 204, 0.3);
-    padding: 10px 20px;
-    border-radius: 30px;
-    color: #88ddff;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 1em;
-    backdrop-filter: blur(5px);
-}
-
-.copy-gallery-btn:hover {
-    background: rgba(0, 136, 204, 0.3);
-    border-color: rgba(0, 136, 204, 0.5);
-    transform: scale(1.05);
-}
-
-.copy-icon {
-    font-size: 1.2em;
-}
-
-.close-btn {
-    background: none;
-    border: none;
-    font-size: 2.5em;
-    cursor: pointer;
-    color: #a0a0a0;
-    transition: all 0.3s ease;
-    width: 50px;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.close-btn:hover {
-    color: #ffffff;
-    background: rgba(255, 255, 255, 0.1);
-    transform: rotate(90deg);
-}
-
-.photos-grid {
+/* Сетка карточек */
+.cards-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 25px;
+    gap: 24px;
+    margin-bottom: 40px;
 }
 
-.photo-frame {
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(5px);
+.person-card {
+    background: rgba(20, 20, 35, 0.7);
+    backdrop-filter: blur(10px);
     border-radius: 20px;
-    padding: 15px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    transition: all 0.3s ease;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    display: flex;
-    flex-direction: column;
+    padding: 20px;
+    text-align: center;
     cursor: pointer;
-    position: relative;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(99, 102, 241, 0.1);
 }
 
-.photo-frame:hover {
+.person-card:hover {
     transform: translateY(-5px);
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(30, 30, 50, 0.8);
+    border-color: rgba(99, 102, 241, 0.4);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
-.photo-frame img {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-    border-radius: 15px;
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-    margin-bottom: 10px;
-    pointer-events: none;
-}
-
-.photo-frame p {
-    text-align: center;
-    color: #c0c0c0;
-    font-weight: 300;
-    font-size: 0.9em;
-    margin-bottom: 10px;
-}
-
-.button-group {
-    display: flex;
-    gap: 10px;
-    margin-top: auto;
-}
-
-.download-btn, .copy-link-btn {
-    flex: 1;
-    padding: 10px;
-    border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    font-weight: 300;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 0.9em;
-    backdrop-filter: blur(5px);
-    pointer-events: auto;
-    text-align: center;
-}
-
-.download-btn {
-    background: rgba(255, 255, 255, 0.1);
+.person-card h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
     color: #ffffff;
+    margin-bottom: 8px;
 }
 
-.download-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.3);
+.person-card .photo-count {
+    font-size: 0.85rem;
+    color: #8b8b9f;
 }
 
-.copy-link-btn {
-    background: rgba(0, 136, 204, 0.2);
-    color: #88ddff;
-    border-color: rgba(0, 136, 204, 0.3);
+.person-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    margin: 0 auto 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 600;
+    color: white;
 }
 
-.copy-link-btn:hover {
-    background: rgba(0, 136, 204, 0.3);
-    border-color: rgba(0, 136, 204, 0.5);
-}
-
-/* Модальное окно */
-.modal {
+/* Модальное окно для альбома (отдельная вкладка) */
+.album-modal {
     display: none;
     position: fixed;
-    z-index: 1000;
+    z-index: 2000;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.95);
+    background-color: rgba(0, 0, 0, 0.97);
     backdrop-filter: blur(8px);
-    animation: fadeIn 0.3s ease;
 }
 
-.modal.active {
+.album-modal.active {
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-.modal-content {
-    position: relative;
-    max-width: 800px;
-    width: 90%;
-    animation: zoomIn 0.3s ease;
+.album-content {
+    width: 95%;
+    max-width: 1400px;
+    height: 90vh;
+    background: rgba(15, 15, 25, 0.95);
+    border-radius: 30px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid rgba(99, 102, 241, 0.2);
 }
 
-.modal-content img {
+.album-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.album-header h2 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #ffffff, #a5b4fc);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.album-close {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    font-size: 1.8rem;
+    cursor: pointer;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.album-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(90deg);
+}
+
+.album-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    padding: 20px;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.album-info {
+    flex: 1;
+    min-width: 200px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 20px;
+    padding: 20px;
+    height: fit-content;
+}
+
+.album-info h3 {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #a5b4fc;
+    margin-bottom: 15px;
+}
+
+.album-info p {
+    color: #c0c0d0;
+    line-height: 1.6;
+    font-size: 0.9rem;
+}
+
+.album-photos {
+    flex: 3;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.photos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.photo-item {
+    background: rgba(30, 30, 45, 0.5);
+    border-radius: 15px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.photo-item:hover {
+    transform: translateY(-3px);
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+.photo-item img {
     width: 100%;
-    height: auto;
-    max-height: 80vh;
+    height: 160px;
+    object-fit: cover;
+}
+
+.photo-item .photo-caption {
+    padding: 10px;
+    font-size: 0.8rem;
+    text-align: center;
+    color: #aaa;
+}
+
+/* Модальное окно для просмотра фото */
+.image-modal {
+    display: none;
+    position: fixed;
+    z-index: 3000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.98);
+    backdrop-filter: blur(15px);
+}
+
+.image-modal.active {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.image-modal-content {
+    max-width: 90vw;
+    max-height: 90vh;
+    position: relative;
+}
+
+.image-modal-content img {
+    max-width: 100%;
+    max-height: 85vh;
     object-fit: contain;
     border-radius: 15px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
 }
 
-.modal-header {
+.image-modal-close {
     position: absolute;
     top: -50px;
-    left: 0;
     right: 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 10px;
-}
-
-.modal-close {
-    color: #ffffff;
-    font-size: 2.5em;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    width: 50px;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
     background: rgba(255, 255, 255, 0.1);
-}
-
-.modal-close:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: rotate(90deg);
-}
-
-.modal-copy-link {
-    background: rgba(0, 136, 204, 0.3);
-    color: #88ddff;
-    padding: 12px 25px;
-    border-radius: 30px;
+    border: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    font-size: 1.8rem;
     cursor: pointer;
-    font-size: 1em;
+    color: white;
     transition: all 0.3s ease;
-    border: 1px solid rgba(0, 136, 204, 0.5);
-    backdrop-filter: blur(5px);
 }
 
-.modal-copy-link:hover {
-    background: rgba(0, 136, 204, 0.5);
-    transform: scale(1.05);
+.image-modal-close:hover {
+    background: rgba(255, 255, 255, 0.2);
 }
 
-.modal-caption {
-    position: absolute;
-    bottom: -45px;
-    left: 0;
-    right: 0;
+.image-modal-caption {
     text-align: center;
-    color: #ffffff;
-    font-size: 1.1em;
-    padding: 12px;
-    background: rgba(0, 0, 0, 0.6);
-    border-radius: 30px;
-    backdrop-filter: blur(5px);
+    margin-top: 15px;
+    color: #ccc;
+    font-size: 0.9rem;
 }
 
+/* Футер */
 footer {
     text-align: center;
     padding: 30px;
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(5px);
-    margin-top: 20px;
+    background: rgba(0, 0, 0, 0.5);
+    margin-top: 40px;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
-    position: relative;
-    z-index: 10;
 }
 
 footer p {
-    color: #a0a0a0;
-    font-weight: 300;
+    color: #8b8b9f;
+    font-weight: 400;
 }
 
 .authors {
-    font-size: 1.2em;
-    font-weight: 400;
+    font-size: 1.1em;
+    font-weight: 500;
     margin-top: 10px;
-    color: #ffffff;
-    text-shadow: 0 2px 5px rgba(0,0,0,0.3);
-    letter-spacing: 2px;
+    color: #a5b4fc;
+    letter-spacing: 1px;
 }
 
-/* Адаптация для телефонов */
+/* Адаптация */
 @media (max-width: 768px) {
-    .container {
-        padding: 10px;
-        padding-bottom: 120px; /* Увеличенный отступ для кнопки Telegram */
-    }
-
     .title {
-        font-size: 2em;
+        font-size: 2.2em;
         margin-top: 20px;
     }
     
-    .subtitle {
-        font-size: 1em;
-        margin-bottom: 30px;
-        padding: 0 15px;
-    }
-    
-    .buttons-container {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 10px;
-    }
-    
-    .person-btn {
-        width: 100%;
-        min-width: auto;
-        padding: 12px 20px;
-        font-size: 1em;
-    }
-    
-    .gallery {
-        padding: 15px;
-        border-radius: 20px;
-    }
-    
-    .gallery-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
-    
-    .gallery-header h2 {
-        font-size: 1.3em;
-        width: 100%;
-    }
-    
-    .header-buttons {
-        width: 100%;
-        justify-content: space-between;
-    }
-    
-    .copy-gallery-btn {
-        padding: 8px 15px;
-        font-size: 0.9em;
-    }
-    
-    .copy-text {
-        display: inline-block;
-    }
-    
-    .close-btn {
-        width: 40px;
-        height: 40px;
-        font-size: 2em;
-    }
-    
-    .photos-grid {
-        grid-template-columns: 1fr;
+    .cards-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
         gap: 15px;
     }
     
-    .photo-frame {
-        padding: 12px;
+    .person-card {
+        padding: 15px;
     }
     
-    .photo-frame img {
-        height: 180px;
+    .person-avatar {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
     }
     
-    .button-group {
+    .person-card h3 {
+        font-size: 1rem;
+    }
+    
+    .album-body {
         flex-direction: column;
-        gap: 8px;
     }
     
-    .download-btn, .copy-link-btn {
-        padding: 8px;
-        font-size: 0.8em;
+    .album-info {
+        min-width: auto;
     }
     
-    /* Адаптация кнопки Telegram для телефона */
+    .album-header h2 {
+        font-size: 1.2rem;
+    }
+    
     .telegram-button {
         bottom: 20px;
         right: 20px;
-        left: 20px; /* Растягиваем на всю ширину */
-        width: auto;
+        left: 20px;
         justify-content: center;
         padding: 12px 20px;
-        box-shadow: 0 4px 20px rgba(0, 136, 204, 0.5);
-    }
-    
-    .telegram-icon {
-        font-size: 1.3em;
     }
     
     .telegram-text {
-        font-size: 1em;
-    }
-    
-    .modal-content {
-        width: 95%;
-    }
-    
-    .modal-header {
-        top: -60px;
-        flex-direction: row-reverse;
-        gap: 10px;
-    }
-    
-    .modal-close {
-        width: 40px;
-        height: 40px;
-        font-size: 2em;
-    }
-    
-    .modal-copy-link {
-        padding: 8px 15px;
-        font-size: 0.9em;
-        white-space: nowrap;
-    }
-    
-    .modal-caption {
-        bottom: -50px;
-        font-size: 0.9em;
-        padding: 10px;
-    }
-    
-    .authors {
-        font-size: 1em;
+        font-size: 0.9rem;
     }
 }
 
-/* Для очень маленьких экранов */
 @media (max-width: 480px) {
-    .container {
-        padding-bottom: 140px; /* Ещё больше отступ */
+    .photos-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 12px;
     }
     
-    .title {
-        font-size: 1.5em;
-    }
-    
-    .gallery-header h2 {
-        font-size: 1.1em;
-    }
-    
-    .photo-frame img {
-        height: 150px;
-    }
-    
-    .modal-content img {
-        max-height: 70vh;
-    }
-    
-    .telegram-button {
-        bottom: 15px;
-        right: 15px;
-        left: 15px;
-        padding: 10px 15px;
-    }
-    
-    .telegram-icon {
-        font-size: 1.2em;
-    }
-    
-    .telegram-text {
-        font-size: 0.9em;
-    }
-}
-
-/* Для ПК с маленьким экраном */
-@media (min-width: 769px) and (max-width: 1024px) {
-    .container {
-        padding-bottom: 100px;
-    }
-    
-    .telegram-button {
-        bottom: 25px;
-        right: 25px;
-    }
-}
-
-@keyframes fadeInDown {
-    from {
-        opacity: 0;
-        transform: translateY(-30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(50px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes zoomIn {
-    from {
-        opacity: 0;
-        transform: scale(0.9);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
+    .photo-item img {
+        height: 120px;
     }
 }
