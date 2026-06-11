@@ -57,18 +57,8 @@ async function loadPeople() {
     }
 }
 
-// Скрыть анимацию загрузки
-function hideLoader() {
-    const loader = document.getElementById('loaderOverlay');
-    if (loader) {
-        loader.classList.add('hidden');
-        setTimeout(() => {
-            if (loader.parentNode) loader.remove();
-        }, 500);
-    }
-}
-
-function showLoader() {
+// Показать анимацию загрузки
+function showLoader(message = 'SCHOOLHUB') {
     const existingLoader = document.getElementById('loaderOverlay');
     if (existingLoader) return;
     
@@ -78,10 +68,21 @@ function showLoader() {
     loader.innerHTML = `
         <div class="loader">
             <div class="loader-spinner"></div>
-            <p>SCHOOLHUB</p>
+            <p>${message}</p>
         </div>
     `;
     document.body.appendChild(loader);
+}
+
+// Скрыть анимацию загрузки
+function hideLoader() {
+    const loader = document.getElementById('loaderOverlay');
+    if (loader) {
+        loader.classList.add('hidden');
+        setTimeout(() => {
+            if (loader.parentNode) loader.remove();
+        }, 500);
+    }
 }
 
 // Скачать фото
@@ -152,6 +153,9 @@ function renderCards(searchTerm = '') {
 
 // Открыть альбом человека
 function openAlbumModal(person, photoIndex = -1) {
+    showLoader('Загрузка альбома...');
+    
+    // Закрываем предыдущий альбом если есть
     const existingModal = document.getElementById('albumModal');
     if (existingModal) {
         existingModal.remove();
@@ -199,14 +203,20 @@ function openAlbumModal(person, photoIndex = -1) {
         copyGalleryBtn.addEventListener('click', () => {
             const url = `${window.location.origin}${window.location.pathname}#${slug}`;
             navigator.clipboard.writeText(url);
+            const originalText = copyGalleryBtn.innerHTML;
             copyGalleryBtn.innerHTML = '✅ Скопировано!';
             setTimeout(() => {
-                copyGalleryBtn.innerHTML = '🔗 Скопировать ссылку на альбом';
+                copyGalleryBtn.innerHTML = originalText;
             }, 2000);
         });
     }
     
     const photosGrid = modal.querySelector('#albumPhotosGrid');
+    
+    // Загружаем фото
+    let loadedCount = 0;
+    const totalPhotos = person.photos.length;
+    
     person.photos.forEach((photo, idx) => {
         const folderName = person.name.toLowerCase().replace(/ /g, '_');
         const photoPath = `images/${folderName}/${photo}`;
@@ -214,30 +224,35 @@ function openAlbumModal(person, photoIndex = -1) {
         const photoDiv = document.createElement('div');
         photoDiv.className = 'photo-item';
         photoDiv.innerHTML = `
-            <img src="${photoPath}" alt="Фото ${idx + 1}" onerror="this.src='https://via.placeholder.com/300x300?text=Нет+фото'">
+            <div class="photo-wrapper">
+                <img src="${photoPath}" alt="Фото ${idx + 1}" onerror="this.src='https://via.placeholder.com/300x300?text=Нет+фото'">
+            </div>
             <div class="photo-caption">Фото ${idx + 1}</div>
             <div class="photo-buttons">
-                <button class="photo-download-btn">⬇ Скачать</button>
-                <button class="photo-copy-btn">🔗 Скопировать ссылку</button>
+                <button class="photo-download-btn" data-path="${photoPath}" data-filename="${photo}">⬇ Скачать</button>
+                <button class="photo-copy-btn" data-slug="${slug}" data-num="${idx + 1}">🔗 Скопировать ссылку</button>
             </div>
         `;
         
-        // Кнопка скачивания
+        // Обработчик скачивания
         const downloadBtn = photoDiv.querySelector('.photo-download-btn');
         downloadBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            downloadPhoto(photoPath, photo);
+            const path = downloadBtn.dataset.path;
+            const filename = downloadBtn.dataset.filename;
+            downloadPhoto(path, filename);
         });
         
-        // Кнопка копирования ссылки на фото
+        // Обработчик копирования ссылки
         const copyBtn = photoDiv.querySelector('.photo-copy-btn');
         copyBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             const url = `${window.location.origin}${window.location.pathname}#${slug}-${idx + 1}`;
             navigator.clipboard.writeText(url);
+            const originalText = copyBtn.innerHTML;
             copyBtn.innerHTML = '✅ Готово!';
             setTimeout(() => {
-                copyBtn.innerHTML = '🔗 Скопировать ссылку';
+                copyBtn.innerHTML = originalText;
             }, 2000);
         });
         
@@ -249,8 +264,24 @@ function openAlbumModal(person, photoIndex = -1) {
         });
         
         photosGrid.appendChild(photoDiv);
+        
+        // Следим за загрузкой всех фото
+        const img = photoDiv.querySelector('img');
+        img.onload = () => {
+            loadedCount++;
+            if (loadedCount === totalPhotos) {
+                hideLoader();
+            }
+        };
+        img.onerror = () => {
+            loadedCount++;
+            if (loadedCount === totalPhotos) {
+                hideLoader();
+            }
+        };
     });
     
+    // Закрытие альбома
     const closeBtn = modal.querySelector('.album-close');
     closeBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -260,6 +291,15 @@ function openAlbumModal(person, photoIndex = -1) {
     modal.addEventListener('click', (e) => {
         if (e.target === modal) closeAlbumModal();
     });
+    
+    // Закрытие по Escape
+    const escapeHandler = (e) => {
+        if (e.key === 'Escape') {
+            closeAlbumModal();
+            document.removeEventListener('keydown', escapeHandler);
+        }
+    };
+    document.addEventListener('keydown', escapeHandler);
     
     if (photoIndex >= 0) {
         setTimeout(() => openImageModal(person, photoIndex), 100);
@@ -274,14 +314,15 @@ function closeAlbumModal() {
     }
     currentPerson = null;
     
-    if (!window.location.hash.includes('-')) {
-        isOpeningFromHash = true;
-        window.location.hash = '';
-        setTimeout(() => { isOpeningFromHash = false; }, 100);
-    }
+    // Очищаем хэш из адресной строки
+    isOpeningFromHash = true;
+    window.location.hash = '';
+    setTimeout(() => { isOpeningFromHash = false; }, 100);
 }
 
 function openImageModal(person, index) {
+    showLoader('Загрузка фото...');
+    
     const photo = person.photos[index];
     const folderName = person.name.toLowerCase().replace(/ /g, '_');
     const photoPath = `images/${folderName}/${photo}`;
@@ -300,11 +341,13 @@ function openImageModal(person, index) {
     modal.innerHTML = `
         <div class="image-modal-content">
             <button class="image-modal-close">×</button>
-            <img src="${photoPath}" alt="${person.name} - фото ${index + 1}" onerror="this.src='https://via.placeholder.com/800x600?text=Нет+фото'">
+            <div class="image-modal-img-wrapper">
+                <img src="${photoPath}" alt="${person.name} - фото ${index + 1}" onerror="this.src='https://via.placeholder.com/800x600?text=Нет+фото'">
+            </div>
             <div class="image-modal-caption">${person.name} — фото ${index + 1}</div>
             <div class="image-modal-buttons">
-                <button class="image-download-btn">⬇ Скачать фото</button>
-                <button class="image-copy-btn">🔗 Скопировать ссылку</button>
+                <button class="image-download-btn" data-path="${photoPath}" data-filename="${photo}">⬇ Скачать фото</button>
+                <button class="image-copy-btn" data-slug="${slug}" data-num="${index + 1}">🔗 Скопировать ссылку</button>
             </div>
         </div>
     `;
@@ -312,22 +355,32 @@ function openImageModal(person, index) {
     document.body.appendChild(modal);
     document.body.style.overflow = 'hidden';
     
-    // Кнопка скачивания
+    // Обработчик скачивания
     const downloadBtn = modal.querySelector('.image-download-btn');
     downloadBtn.addEventListener('click', () => {
-        downloadPhoto(photoPath, photo);
+        downloadPhoto(downloadBtn.dataset.path, downloadBtn.dataset.filename);
     });
     
-    // Кнопка копирования ссылки
+    // Обработчик копирования ссылки
     const copyBtn = modal.querySelector('.image-copy-btn');
     copyBtn.addEventListener('click', () => {
         const url = `${window.location.origin}${window.location.pathname}#${slug}-${index + 1}`;
         navigator.clipboard.writeText(url);
+        const originalText = copyBtn.innerHTML;
         copyBtn.innerHTML = '✅ Скопировано!';
         setTimeout(() => {
-            copyBtn.innerHTML = '🔗 Скопировать ссылку';
+            copyBtn.innerHTML = originalText;
         }, 2000);
     });
+    
+    // Ждём загрузки фото
+    const img = modal.querySelector('img');
+    img.onload = () => {
+        hideLoader();
+    };
+    img.onerror = () => {
+        hideLoader();
+    };
     
     const closeModalFunc = () => {
         modal.remove();
@@ -394,7 +447,11 @@ function checkUrlAndOpen() {
 }
 
 async function init() {
-    showLoader();
+    showLoader('Загрузка SchoolHub...');
+    
+    // Имитация более долгой загрузки для красоты
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
     peopleList = await loadPeople();
     
     const container = document.querySelector('.container');
