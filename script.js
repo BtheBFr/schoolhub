@@ -50,6 +50,7 @@ async function loadPeople() {
         const response = await fetch('people.json');
         const data = await response.json();
         const sorted = [...data.people].sort(sortByName);
+        console.log('Загружено людей:', sorted.length); // Для отладки
         return sorted;
     } catch (error) {
         console.error('Ошибка загрузки данных:', error);
@@ -106,11 +107,21 @@ async function downloadPhoto(path, filename) {
 
 // Создание карточек людей
 function renderCards(searchTerm = '') {
+    console.log('renderCards вызван, людей:', peopleList.length); // Для отладки
+    
     const container = document.getElementById('cardsGrid');
-    if (!container) return;
+    if (!container) {
+        console.error('Контейнер cardsGrid не найден');
+        return;
+    }
+    
+    if (!peopleList.length) {
+        container.innerHTML = '<div style="text-align:center; grid-column:1/-1; padding:40px;">👤 Загрузка...</div>';
+        return;
+    }
     
     let filteredPeople = [...peopleList];
-    if (searchTerm) {
+    if (searchTerm && searchTerm.trim() !== '') {
         const lowerSearch = searchTerm.toLowerCase();
         filteredPeople = peopleList.filter(person => 
             person.name.toLowerCase().includes(lowerSearch)
@@ -130,6 +141,7 @@ function renderCards(searchTerm = '') {
         </div>
     `).join('');
     
+    // Обработчики для карточек
     document.querySelectorAll('.person-card').forEach(card => {
         const avatarDiv = card.querySelector('.person-avatar');
         const avatarSrc = card.dataset.avatar;
@@ -155,7 +167,6 @@ function renderCards(searchTerm = '') {
 function openAlbumModal(person, photoIndex = -1) {
     showLoader('Загрузка альбома...');
     
-    // Закрываем предыдущий альбом если есть
     const existingModal = document.getElementById('albumModal');
     if (existingModal) {
         existingModal.remove();
@@ -197,7 +208,6 @@ function openAlbumModal(person, photoIndex = -1) {
     document.body.appendChild(modal);
     document.body.style.overflow = 'hidden';
     
-    // Кнопка копирования ссылки на альбом
     const copyGalleryBtn = modal.querySelector('#copyGalleryBtnAlbum');
     if (copyGalleryBtn) {
         copyGalleryBtn.addEventListener('click', () => {
@@ -213,9 +223,12 @@ function openAlbumModal(person, photoIndex = -1) {
     
     const photosGrid = modal.querySelector('#albumPhotosGrid');
     
-    // Загружаем фото
     let loadedCount = 0;
     const totalPhotos = person.photos.length;
+    
+    if (totalPhotos === 0) {
+        hideLoader();
+    }
     
     person.photos.forEach((photo, idx) => {
         const folderName = person.name.toLowerCase().replace(/ /g, '_');
@@ -234,16 +247,12 @@ function openAlbumModal(person, photoIndex = -1) {
             </div>
         `;
         
-        // Обработчик скачивания
         const downloadBtn = photoDiv.querySelector('.photo-download-btn');
         downloadBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            const path = downloadBtn.dataset.path;
-            const filename = downloadBtn.dataset.filename;
-            downloadPhoto(path, filename);
+            downloadPhoto(downloadBtn.dataset.path, downloadBtn.dataset.filename);
         });
         
-        // Обработчик копирования ссылки
         const copyBtn = photoDiv.querySelector('.photo-copy-btn');
         copyBtn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -256,17 +265,12 @@ function openAlbumModal(person, photoIndex = -1) {
             }, 2000);
         });
         
-        // Клик по фото для увеличения
         const img = photoDiv.querySelector('img');
         img.addEventListener('click', (e) => {
             e.stopPropagation();
             openImageModal(person, idx);
         });
         
-        photosGrid.appendChild(photoDiv);
-        
-        // Следим за загрузкой всех фото
-        const img = photoDiv.querySelector('img');
         img.onload = () => {
             loadedCount++;
             if (loadedCount === totalPhotos) {
@@ -279,9 +283,10 @@ function openAlbumModal(person, photoIndex = -1) {
                 hideLoader();
             }
         };
+        
+        photosGrid.appendChild(photoDiv);
     });
     
-    // Закрытие альбома
     const closeBtn = modal.querySelector('.album-close');
     closeBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -292,7 +297,6 @@ function openAlbumModal(person, photoIndex = -1) {
         if (e.target === modal) closeAlbumModal();
     });
     
-    // Закрытие по Escape
     const escapeHandler = (e) => {
         if (e.key === 'Escape') {
             closeAlbumModal();
@@ -314,7 +318,6 @@ function closeAlbumModal() {
     }
     currentPerson = null;
     
-    // Очищаем хэш из адресной строки
     isOpeningFromHash = true;
     window.location.hash = '';
     setTimeout(() => { isOpeningFromHash = false; }, 100);
@@ -355,13 +358,11 @@ function openImageModal(person, index) {
     document.body.appendChild(modal);
     document.body.style.overflow = 'hidden';
     
-    // Обработчик скачивания
     const downloadBtn = modal.querySelector('.image-download-btn');
     downloadBtn.addEventListener('click', () => {
         downloadPhoto(downloadBtn.dataset.path, downloadBtn.dataset.filename);
     });
     
-    // Обработчик копирования ссылки
     const copyBtn = modal.querySelector('.image-copy-btn');
     copyBtn.addEventListener('click', () => {
         const url = `${window.location.origin}${window.location.pathname}#${slug}-${index + 1}`;
@@ -373,7 +374,6 @@ function openImageModal(person, index) {
         }, 2000);
     });
     
-    // Ждём загрузки фото
     const img = modal.querySelector('img');
     img.onload = () => {
         hideLoader();
@@ -449,18 +449,27 @@ function checkUrlAndOpen() {
 async function init() {
     showLoader('Загрузка SchoolHub...');
     
-    // Имитация более долгой загрузки для красоты
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     peopleList = await loadPeople();
     
-    const container = document.querySelector('.container');
-    const existingGrid = document.getElementById('cardsGrid');
-    if (!existingGrid) {
-        const gridDiv = document.createElement('div');
-        gridDiv.id = 'cardsGrid';
-        gridDiv.className = 'cards-grid';
-        container.appendChild(gridDiv);
+    // Создаём контейнер для карточек, если его нет
+    let cardsGrid = document.getElementById('cardsGrid');
+    if (!cardsGrid) {
+        cardsGrid = document.createElement('div');
+        cardsGrid.id = 'cardsGrid';
+        cardsGrid.className = 'cards-grid';
+        
+        // Находим контейнер и вставляем после поиска
+        const container = document.querySelector('.container');
+        const searchContainer = document.querySelector('.search-container');
+        
+        if (searchContainer && searchContainer.nextSibling) {
+            container.insertBefore(cardsGrid, searchContainer.nextSibling);
+        } else if (container) {
+            container.appendChild(cardsGrid);
+        }
+        console.log('Создан новый контейнер cardsGrid');
     }
     
     renderCards();
@@ -491,4 +500,9 @@ window.addEventListener('hashchange', () => {
     checkUrlAndOpen();
 });
 
-document.addEventListener('DOMContentLoaded', init);
+// Запуск после полной загрузки DOM
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
