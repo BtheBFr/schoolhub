@@ -38,7 +38,9 @@ let currentPhotoIndex = -1;
 async function init() {
     peopleList = await loadPeople();
     createButtons();
-    checkUrl();
+    
+    // Проверяем URL после загрузки данных
+    checkUrlAndOpen();
 }
 
 // Создаем кнопки
@@ -60,13 +62,13 @@ function openGallery(person, photoIndex = -1) {
     currentPerson = person;
     currentPhotoIndex = photoIndex;
     
-    // Обновляем URL
+    // Обновляем URL (используем хэш, чтобы избежать 404)
     const slug = transliterate(person.name);
-    let newUrl = `/schoolhub/${slug}`;
+    let newHash = slug;
     if (photoIndex >= 0) {
-        newUrl = `/schoolhub/${slug}-${photoIndex + 1}`;
+        newHash = `${slug}-${photoIndex + 1}`;
     }
-    window.history.pushState({}, '', newUrl);
+    window.location.hash = newHash;
     
     // Показываем галерею
     showGallery();
@@ -87,7 +89,7 @@ function showGallery() {
     // Кнопка копирования галереи
     copyGalleryBtn.onclick = () => {
         const slug = transliterate(currentPerson.name);
-        const url = `https://bthebfr.github.io/schoolhub/${slug}`;
+        const url = `${window.location.origin}${window.location.pathname}#${slug}`;
         navigator.clipboard.writeText(url);
         copyGalleryBtn.innerHTML = '✅ Скопировано!';
         setTimeout(() => {
@@ -131,7 +133,7 @@ function showGallery() {
         copyBtn.onclick = (e) => {
             e.stopPropagation();
             const slug = transliterate(currentPerson.name);
-            const url = `https://bthebfr.github.io/schoolhub/${slug}-${index + 1}`;
+            const url = `${window.location.origin}${window.location.pathname}#${slug}-${index + 1}`;
             navigator.clipboard.writeText(url);
             copyBtn.textContent = '✅ Готово';
             setTimeout(() => {
@@ -173,7 +175,7 @@ function openPhoto(index) {
     
     // Обновляем URL
     const slug = transliterate(currentPerson.name);
-    window.history.pushState({}, '', `/schoolhub/${slug}-${index + 1}`);
+    window.location.hash = `${slug}-${index + 1}`;
     
     // Создаем модальное окно
     const modal = document.createElement('div');
@@ -201,7 +203,7 @@ function openPhoto(index) {
     
     // Копирование ссылки
     modal.querySelector('.modal-copy-link').onclick = () => {
-        const url = `https://bthebfr.github.io/schoolhub/${slug}-${index + 1}`;
+        const url = `${window.location.origin}${window.location.pathname}#${slug}-${index + 1}`;
         navigator.clipboard.writeText(url);
         const btn = modal.querySelector('.modal-copy-link');
         btn.textContent = '✅ Скопировано!';
@@ -231,7 +233,7 @@ function closeModal() {
     // Возвращаем URL к галерее
     if (currentPerson) {
         const slug = transliterate(currentPerson.name);
-        window.history.pushState({}, '', `/schoolhub/${slug}`);
+        window.location.hash = slug;
     }
 }
 
@@ -240,7 +242,7 @@ function closeGallery() {
     document.getElementById('gallery').classList.remove('active');
     currentPerson = null;
     currentPhotoIndex = -1;
-    window.history.pushState({}, '', '/schoolhub/');
+    window.location.hash = '';
 }
 
 // Скачать фото
@@ -261,22 +263,15 @@ async function downloadPhoto(path, filename) {
     }
 }
 
-// Проверка URL
-function checkUrl() {
-    let path = window.location.pathname;
+// Проверка URL и открытие нужного альбома
+function checkUrlAndOpen() {
+    // Получаем хэш без символа #
+    let hash = window.location.hash.substring(1);
     
-    // Убираем /schoolhub/
-    if (path.startsWith('/schoolhub/')) {
-        path = path.replace('/schoolhub/', '');
-    } else if (path === '/schoolhub') {
-        path = '';
-    }
-    path = path.replace(/^\/+|\/+$/g, '');
+    if (!hash) return;
     
-    if (!path) return;
-    
-    // Проверяем фото
-    const match = path.match(/(.+)-(\d+)$/);
+    // Проверяем фото (формат: имя-1)
+    const match = hash.match(/(.+)-(\d+)$/);
     
     if (match) {
         const personSlug = match[1];
@@ -292,16 +287,17 @@ function checkUrl() {
             }
         }
     } else {
-        const person = peopleList.find(p => transliterate(p.name) === path);
+        // Просто человек
+        const person = peopleList.find(p => transliterate(p.name) === hash);
         if (person) {
             openGallery(person);
         }
     }
 }
 
-// Слушаем кнопки назад/вперед
-window.addEventListener('popstate', () => {
-    location.reload();
+// Слушаем изменения хэша (кнопки назад/вперед)
+window.addEventListener('hashchange', () => {
+    checkUrlAndOpen();
 });
 
 // Запуск
