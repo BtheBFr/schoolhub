@@ -251,6 +251,8 @@ body {
     align-items: center;
     padding: 20px 30px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-wrap: wrap;
+    gap: 15px;
 }
 
 .album-header h2 {
@@ -260,6 +262,30 @@ body {
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+}
+
+.album-header-buttons {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.copy-gallery-btn {
+    background: rgba(99, 102, 241, 0.2);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    padding: 10px 20px;
+    border-radius: 30px;
+    color: #a5b4fc;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.copy-gallery-btn:hover {
+    background: rgba(99, 102, 241, 0.3);
+    transform: scale(1.02);
 }
 
 .album-close {
@@ -318,17 +344,19 @@ body {
 
 .photos-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 15px;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 20px;
 }
 
+/* Фикс для фото - одинаковый размер и центрирование */
 .photo-item {
     background: rgba(30, 30, 45, 0.5);
     border-radius: 15px;
     overflow: hidden;
-    cursor: pointer;
     transition: all 0.3s ease;
     border: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
 }
 
 .photo-item:hover {
@@ -336,17 +364,72 @@ body {
     border-color: rgba(99, 102, 241, 0.3);
 }
 
-.photo-item img {
+.photo-wrapper {
     width: 100%;
-    height: 140px;
-    object-fit: cover;
+    height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #0a0a0f;
+    cursor: pointer;
 }
 
-.photo-item .photo-caption {
-    padding: 8px;
-    font-size: 0.75rem;
+.photo-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.photo-wrapper img:hover {
+    transform: scale(1.05);
+}
+
+.photo-caption {
+    padding: 10px;
+    font-size: 0.8rem;
     text-align: center;
     color: #aaa;
+}
+
+/* Кнопки под фото - фиксированная высота, не двигают фото */
+.photo-buttons {
+    display: flex;
+    gap: 8px;
+    padding: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    min-height: 48px;
+}
+
+.photo-download-btn, .photo-copy-btn {
+    flex: 1;
+    padding: 6px;
+    border-radius: 12px;
+    border: none;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Inter', sans-serif;
+    white-space: nowrap;
+}
+
+.photo-download-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.photo-download-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.photo-copy-btn {
+    background: rgba(99, 102, 241, 0.2);
+    color: #a5b4fc;
+}
+
+.photo-copy-btn:hover {
+    background: rgba(99, 102, 241, 0.3);
 }
 
 /* Модальное окно для фото */
@@ -372,11 +455,22 @@ body {
     max-width: 90vw;
     max-height: 90vh;
     position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-.image-modal-content img {
+.image-modal-img-wrapper {
+    max-width: 90vw;
+    max-height: 70vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.image-modal-img-wrapper img {
     max-width: 100%;
-    max-height: 85vh;
+    max-height: 70vh;
     object-fit: contain;
     border-radius: 15px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
@@ -408,6 +502,42 @@ body {
     font-size: 0.9rem;
 }
 
+.image-modal-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.image-download-btn, .image-copy-btn {
+    padding: 10px 24px;
+    border-radius: 30px;
+    border: none;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Inter', sans-serif;
+    white-space: nowrap;
+}
+
+.image-download-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.image-download-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.image-copy-btn {
+    background: rgba(99, 102, 241, 0.2);
+    color: #a5b4fc;
+}
+
+.image-copy-btn:hover {
+    background: rgba(99, 102, 241, 0.3);
+}
+
 /* Футер */
 footer {
     text-align: center;
@@ -430,7 +560,7 @@ footer p {
     letter-spacing: 1px;
 }
 
-/* Адаптация для телефонов */
+/* Адаптация */
 @media (max-width: 768px) {
     .container {
         padding: 15px;
@@ -472,6 +602,17 @@ footer p {
         font-size: 1.2rem;
     }
     
+    .album-header-buttons {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .copy-gallery-btn {
+        font-size: 0.8rem;
+        white-space: normal;
+        padding: 8px 12px;
+    }
+    
     .telegram-button {
         bottom: 20px;
         right: 20px;
@@ -485,12 +626,33 @@ footer p {
     }
     
     .photos-grid {
-        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-        gap: 12px;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 15px;
     }
     
-    .photo-item img {
-        height: 110px;
+    .photo-wrapper {
+        height: 130px;
+    }
+    
+    .photo-buttons {
+        flex-direction: column;
+        gap: 5px;
+        min-height: 70px;
+    }
+    
+    .photo-download-btn, .photo-copy-btn {
+        white-space: normal;
+        font-size: 0.65rem;
+    }
+    
+    .image-modal-buttons {
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+    }
+    
+    .image-download-btn, .image-copy-btn {
+        white-space: normal;
     }
 }
 
@@ -508,129 +670,12 @@ footer p {
     .photo-count {
         font-size: 0.7rem;
     }
-}
-
-/* Кнопки в альбоме */
-.album-header-buttons {
-    display: flex;
-    gap: 15px;
-    align-items: center;
-}
-
-.copy-gallery-btn {
-    background: rgba(99, 102, 241, 0.2);
-    border: 1px solid rgba(99, 102, 241, 0.3);
-    padding: 10px 20px;
-    border-radius: 30px;
-    color: #a5b4fc;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-family: 'Inter', sans-serif;
-    font-size: 0.9rem;
-}
-
-.copy-gallery-btn:hover {
-    background: rgba(99, 102, 241, 0.3);
-    transform: scale(1.02);
-}
-
-/* Кнопки под каждым фото */
-.photo-buttons {
-    display: flex;
-    gap: 8px;
-    padding: 8px;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.photo-download-btn, .photo-copy-btn {
-    flex: 1;
-    padding: 6px;
-    border-radius: 12px;
-    border: none;
-    font-size: 0.7rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-family: 'Inter', sans-serif;
-}
-
-.photo-download-btn {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-}
-
-.photo-download-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-.photo-copy-btn {
-    background: rgba(99, 102, 241, 0.2);
-    color: #a5b4fc;
-}
-
-.photo-copy-btn:hover {
-    background: rgba(99, 102, 241, 0.3);
-}
-
-/* Кнопки в модальном окне фото */
-.image-modal-buttons {
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-    margin-top: 20px;
-}
-
-.image-download-btn, .image-copy-btn {
-    padding: 10px 24px;
-    border-radius: 30px;
-    border: none;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-family: 'Inter', sans-serif;
-}
-
-.image-download-btn {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-}
-
-.image-download-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-.image-copy-btn {
-    background: rgba(99, 102, 241, 0.2);
-    color: #a5b4fc;
-}
-
-.image-copy-btn:hover {
-    background: rgba(99, 102, 241, 0.3);
-}
-
-/* Фикс для одинакового размера фото */
-.photo-item img {
-    width: 100%;
-    height: 160px;
-    object-fit: cover;
-}
-
-@media (max-width: 768px) {
-    .photo-item img {
-        height: 140px;
+    
+    .photos-grid {
+        grid-template-columns: 1fr;
     }
     
-    .album-header-buttons {
-        flex-direction: column;
-        gap: 8px;
-    }
-    
-    .copy-gallery-btn {
-        padding: 6px 12px;
-        font-size: 0.8rem;
-    }
-    
-    .image-modal-buttons {
-        flex-direction: column;
-        gap: 10px;
+    .photo-wrapper {
+        height: 200px;
     }
 }
