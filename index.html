@@ -15,32 +15,18 @@
 
     <div class="container">
         <h1 class="title">SchoolHub</h1>
-        <p class="subtitle">Наши люди</p>
+        <p class="subtitle">Галерея наших людей</p>
         
-        <div class="buttons-container" id="buttonsContainer">
-            <!-- Кнопки будут создаваться автоматически -->
+        <div class="search-container">
+            <input type="text" id="searchInput" class="search-input" placeholder="🔍 Поиск по имени..." autocomplete="off">
         </div>
-
-        <div class="gallery" id="gallery">
-            <div class="gallery-header">
-                <h2 id="selectedPersonName"></h2>
-                <div class="header-buttons">
-                    <button class="copy-gallery-btn" id="copyGalleryBtn" title="Копировать ссылку на галерею">
-                        <span class="copy-icon">🔗</span>
-                        <span class="copy-text">Галерея</span>
-                    </button>
-                    <button class="close-btn" onclick="closeGallery()">×</button>
-                </div>
-            </div>
-            <div class="photos-grid" id="photosGrid">
-                <!-- Фото будут загружаться сюда -->
-            </div>
-        </div>
+        
+        <!-- Сетка карточек будет здесь -->
     </div>
 
     <footer>
         <p>Сайт создан командой:</p>
-        <p class="authors">B the B · Lap.comp · MCparkur · 2026</p>
+        <p class="authors">b the b · ElPrimo · MCparkur · 2026</p>
     </footer>
 
     <script src="script.js"></script>
