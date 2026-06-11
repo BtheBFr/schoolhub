@@ -509,3 +509,128 @@ footer p {
         font-size: 0.7rem;
     }
 }
+
+/* Кнопки в альбоме */
+.album-header-buttons {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.copy-gallery-btn {
+    background: rgba(99, 102, 241, 0.2);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    padding: 10px 20px;
+    border-radius: 30px;
+    color: #a5b4fc;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+}
+
+.copy-gallery-btn:hover {
+    background: rgba(99, 102, 241, 0.3);
+    transform: scale(1.02);
+}
+
+/* Кнопки под каждым фото */
+.photo-buttons {
+    display: flex;
+    gap: 8px;
+    padding: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.photo-download-btn, .photo-copy-btn {
+    flex: 1;
+    padding: 6px;
+    border-radius: 12px;
+    border: none;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Inter', sans-serif;
+}
+
+.photo-download-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.photo-download-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.photo-copy-btn {
+    background: rgba(99, 102, 241, 0.2);
+    color: #a5b4fc;
+}
+
+.photo-copy-btn:hover {
+    background: rgba(99, 102, 241, 0.3);
+}
+
+/* Кнопки в модальном окне фото */
+.image-modal-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.image-download-btn, .image-copy-btn {
+    padding: 10px 24px;
+    border-radius: 30px;
+    border: none;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Inter', sans-serif;
+}
+
+.image-download-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.image-download-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.image-copy-btn {
+    background: rgba(99, 102, 241, 0.2);
+    color: #a5b4fc;
+}
+
+.image-copy-btn:hover {
+    background: rgba(99, 102, 241, 0.3);
+}
+
+/* Фикс для одинакового размера фото */
+.photo-item img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+}
+
+@media (max-width: 768px) {
+    .photo-item img {
+        height: 140px;
+    }
+    
+    .album-header-buttons {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .copy-gallery-btn {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+    
+    .image-modal-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
